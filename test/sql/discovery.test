@@ -1,0 +1,37 @@
+# name: test/sql/discovery.test
+# description: supported_entities discovery table function
+# group: [vgi_pii]
+
+require-env VGI_PII_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION '${VGI_PII_WORKER}');
+
+# Several entity types are supported.
+query I
+SELECT count(*) > 5 FROM pii.supported_entities();
+----
+true
+
+# Known core types are present.
+query I rowsort
+SELECT entity_type
+FROM pii.supported_entities()
+WHERE entity_type IN ('PERSON', 'EMAIL_ADDRESS', 'CREDIT_CARD');
+----
+CREDIT_CARD
+EMAIL_ADDRESS
+PERSON
+
+# Every type detect_pii returns is one supported_entities lists.
+query I
+SELECT bool_and(entity_type IN (SELECT entity_type FROM pii.supported_entities()))
+FROM pii.detect_pii('Call John Smith at john@example.com');
+----
+true
+
+statement ok
+DETACH pii;

@@ -1,0 +1,72 @@
+[project]
+name = "vgi-pii"
+version = "0.1.0"
+description = "Detect + redact PII in text (Microsoft Presidio) as a VGI worker for DuckDB/SQL"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { file = "LICENSE" }
+authors = [{ name = "Query Farm", email = "hello@query.farm" }]
+keywords = ["vgi", "duckdb", "pii", "presidio", "redaction", "anonymization", "privacy"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "vgi-python",
+    "presidio-analyzer>=2.2",
+    "presidio-anonymizer>=2.2",
+    "spacy>=3.7",
+    "pyarrow",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "mypy>=1.10",
+    "ruff>=0.5",
+    "en-core-web-sm",
+]
+
+[project.urls]
+Homepage = "https://query.farm"
+
+[tool.uv.sources]
+# Develop against the local vgi-python checkout (sibling directory). Drop or
+# override this block to resolve vgi-python from an index instead.
+vgi-python = { path = "../vgi-python" }
+# Pin the small English spaCy pipeline (~12 MB, MIT) as a wheel so it is
+# installed (never downloaded at runtime). Presidio defaults to en_core_web_lg
+# (~400 MB) otherwise; engine.py wires the analyzer to this small model.
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["vgi_pii"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# The PEP 723 inline-script header pins a model wheel by long URL; it cannot wrap.
+"pii_worker.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true

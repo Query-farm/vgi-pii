@@ -1,0 +1,93 @@
+# name: test/sql/redact.test
+# description: has_pii / redact / anonymize scalars through a real ATTACH + SELECT
+# group: [vgi_pii]
+
+require-env VGI_PII_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION '${VGI_PII_WORKER}');
+
+# ---- has_pii ----
+
+query I
+SELECT pii.has_pii('Call John Smith at john@example.com');
+----
+true
+
+query I
+SELECT pii.has_pii('the quick brown fox jumps');
+----
+false
+
+# NULL input -> NULL output.
+query I
+SELECT pii.has_pii(NULL) IS NULL;
+----
+true
+
+# ---- redact (entities -> <TYPE> tags) ----
+
+query I
+SELECT pii.redact('Call John Smith at john@example.com') LIKE '%<PERSON>%';
+----
+true
+
+query I
+SELECT pii.redact('Call John Smith at john@example.com') LIKE '%<EMAIL_ADDRESS>%';
+----
+true
+
+# The original email must not survive redaction.
+query I
+SELECT pii.redact('Call John Smith at john@example.com') LIKE '%john@example.com%';
+----
+false
+
+# Clean text is returned unchanged.
+query I
+SELECT pii.redact('just some words');
+----
+just some words
+
+query I
+SELECT pii.redact(NULL) IS NULL;
+----
+true
+
+# ---- anonymize (entities -> '*' mask, a distinct operator) ----
+
+query I
+SELECT pii.anonymize('Email john@example.com') LIKE '%*%';
+----
+true
+
+query I
+SELECT pii.anonymize('Email john@example.com') LIKE '%john@example.com%';
+----
+false
+
+# anonymize masks (no type tags), so it differs from redact.
+query I
+SELECT pii.anonymize('Email john@example.com') = pii.redact('Email john@example.com');
+----
+false
+
+query I
+SELECT pii.anonymize(NULL) IS NULL;
+----
+true
+
+# Per-row use over a small VALUES table.
+query II rowsort
+SELECT t, pii.has_pii(t)
+FROM (VALUES ('Email john@example.com'), ('plain text'), ('SSN 078-05-1120')) AS v(t);
+----
+Email john@example.com	true
+SSN 078-05-1120	true
+plain text	false
+
+statement ok
+DETACH pii;

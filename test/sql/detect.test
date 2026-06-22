@@ -1,0 +1,86 @@
+# name: test/sql/detect.test
+# description: detect_pii table function + pii_types scalar (UNNEST)
+# group: [vgi_pii]
+
+require-env VGI_PII_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION '${VGI_PII_WORKER}');
+
+# ---- detect_pii(): one row per entity ----
+
+query I
+SELECT count(*) > 0 FROM pii.detect_pii('Call John Smith at john@example.com');
+----
+true
+
+# The expected entity types show up (ORDER BY for determinism).
+query I rowsort
+SELECT DISTINCT entity_type
+FROM pii.detect_pii('Call John Smith at john@example.com')
+WHERE entity_type IN ('PERSON', 'EMAIL_ADDRESS');
+----
+EMAIL_ADDRESS
+PERSON
+
+# Offsets slice back to the matched substring.
+query I
+SELECT bool_and(substr('Email john@example.com', start + 1, end_pos - start) = text)
+FROM pii.detect_pii('Email john@example.com');
+----
+true
+
+# Score is a probability in [0, 1].
+query I
+SELECT bool_and(score >= 0.0 AND score <= 1.0)
+FROM pii.detect_pii('Email john@example.com');
+----
+true
+
+# Empty text -> no rows.
+query I
+SELECT count(*) FROM pii.detect_pii('');
+----
+0
+
+# Clean text -> no rows.
+query I
+SELECT count(*) FROM pii.detect_pii('the quick brown fox');
+----
+0
+
+# A higher score_threshold never yields more rows than a lower one.
+query I
+SELECT
+  (SELECT count(*) FROM pii.detect_pii('Visit example.com today', score_threshold := 0.95))
+  <=
+  (SELECT count(*) FROM pii.detect_pii('Visit example.com today', score_threshold := 0.0));
+----
+true
+
+# ---- pii_types(): distinct entity types as a VARCHAR[] (UNNEST) ----
+
+query I rowsort
+SELECT t
+FROM (SELECT UNNEST(pii.pii_types('Call John Smith at john@example.com')) AS t)
+WHERE t IN ('PERSON', 'EMAIL_ADDRESS');
+----
+EMAIL_ADDRESS
+PERSON
+
+# Clean text -> empty list (length 0).
+query I
+SELECT length(pii.pii_types('nothing private here'));
+----
+0
+
+query I
+SELECT pii.pii_types(NULL) IS NULL;
+----
+true
+
+statement ok
+DETACH pii;
