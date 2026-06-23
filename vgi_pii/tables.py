@@ -75,6 +75,8 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
     FIXED_SCHEMA: ClassVar[pa.Schema] = _DETECT_PII_SCHEMA
 
     class Meta:
+        """Function metadata."""
+
         name = "detect_pii"
         description = "One row per detected PII entity (entity_type, text, start, end_pos, score)"
         categories = ["pii", "detect"]
@@ -84,20 +86,19 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                 description="List every PII entity found in the text",
             ),
             FunctionExample(
-                sql=(
-                    "SELECT entity_type, text FROM "
-                    "pii.detect_pii('Email john@example.com', score_threshold := 0.8)"
-                ),
+                sql=("SELECT entity_type, text FROM pii.detect_pii('Email john@example.com', score_threshold := 0.8)"),
                 description="Only high-confidence detections",
             ),
         ]
 
     @classmethod
     def cardinality(cls, params: BindParams[_DetectPiiArgs]) -> TableCardinality:
+        """Estimated and maximum row count for the planner."""
         return TableCardinality(estimate=4, max=None)
 
     @classmethod
     def process(cls, params: ProcessParams[_DetectPiiArgs], state: None, out: OutputCollector) -> None:
+        """Emit the output rows produced by this invocation."""
         a = params.args
         entities = engine.detect(a.text, a.language, a.score_threshold)
         out.emit(
@@ -135,6 +136,8 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
     FIXED_SCHEMA: ClassVar[pa.Schema] = _SUPPORTED_ENTITIES_SCHEMA
 
     class Meta:
+        """Function metadata."""
+
         name = "supported_entities"
         description = "Every PII entity type the analyzer can detect (PERSON, EMAIL_ADDRESS, ...)"
         categories = ["pii", "detect"]
@@ -151,12 +154,12 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
 
     @classmethod
     def cardinality(cls, params: BindParams[_SupportedEntitiesArgs]) -> TableCardinality:
+        """Estimated and maximum row count for the planner."""
         return TableCardinality(estimate=25, max=200)
 
     @classmethod
-    def process(
-        cls, params: ProcessParams[_SupportedEntitiesArgs], state: None, out: OutputCollector
-    ) -> None:
+    def process(cls, params: ProcessParams[_SupportedEntitiesArgs], state: None, out: OutputCollector) -> None:
+        """Emit the output rows produced by this invocation."""
         rows = engine.supported_entities(params.args.language)
         out.emit(pa.RecordBatch.from_pydict({"entity_type": rows}, schema=params.output_schema))
         out.finish()

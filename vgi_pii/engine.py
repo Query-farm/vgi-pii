@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import threading
 from functools import lru_cache
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from presidio_analyzer import AnalyzerEngine
@@ -87,7 +87,9 @@ def _anonymizer() -> AnonymizerEngine:
     """The Presidio ``AnonymizerEngine``, built once (stateless, but cached)."""
     from presidio_anonymizer import AnonymizerEngine
 
-    return AnonymizerEngine()
+    # AnonymizerEngine() takes no required args; presidio is untyped so mypy
+    # cannot see the no-arg constructor and flags it as an untyped call.
+    return AnonymizerEngine()  # type: ignore[no-untyped-call]
 
 
 def analyzer() -> AnalyzerEngine:
@@ -191,7 +193,7 @@ def _anonymize(
     text: str | None,
     language: str,
     score_threshold: float,
-    operators: dict | None,
+    operators: dict[str, Any] | None,
 ) -> str | None:
     """Shared anonymize path for :func:`redact` / :func:`anonymize`."""
     if not _has_text(text):

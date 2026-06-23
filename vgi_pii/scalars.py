@@ -71,6 +71,8 @@ class HasPiiFunction(ScalarFunction):
     """``has_pii(text)`` -- True if any PII entity is detected (language 'en')."""
 
     class Meta:
+        """Function metadata."""
+
         name = "has_pii"
         description = "True if any PII entity is detected in text (language defaults to 'en')"
         categories = ["pii", "detect"]
@@ -85,6 +87,7 @@ class HasPiiFunction(ScalarFunction):
     def compute(
         cls, text: Annotated[pa.StringArray, Param(doc="Text to scan for PII.")]
     ) -> Annotated[pa.BooleanArray, Returns()]:
+        """Map each input row to its output value."""
         return _map_bool(text, lambda x: engine.has_pii(x, _DEFAULT_LANGUAGE))
 
 
@@ -92,6 +95,8 @@ class HasPiiLanguageFunction(ScalarFunction):
     """``has_pii(text, language)`` -- True if any PII entity is detected."""
 
     class Meta:
+        """Function metadata."""
+
         name = "has_pii"
         description = "True if any PII entity is detected in text, in a given language"
         categories = ["pii", "detect"]
@@ -108,6 +113,7 @@ class HasPiiLanguageFunction(ScalarFunction):
         text: Annotated[pa.StringArray, Param(doc="Text to scan for PII.")],
         language: Annotated[str, ConstParam("ISO language code, e.g. 'en'.")],
     ) -> Annotated[pa.BooleanArray, Returns()]:
+        """Map each input row to its output value."""
         return _map_bool(text, lambda x: engine.has_pii(x, language))
 
 
@@ -120,6 +126,8 @@ class RedactFunction(ScalarFunction):
     """``redact(text)`` -- replace each entity with its ``<TYPE>`` tag."""
 
     class Meta:
+        """Function metadata."""
+
         name = "redact"
         description = "Replace each PII entity with its type tag, e.g. '<PERSON>' (language 'en')"
         categories = ["pii", "redact"]
@@ -134,6 +142,7 @@ class RedactFunction(ScalarFunction):
     def compute(
         cls, text: Annotated[pa.StringArray, Param(doc="Text to redact.")]
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         return _map_str(text, lambda x: engine.redact(x, _DEFAULT_LANGUAGE))
 
 
@@ -141,6 +150,8 @@ class RedactLanguageFunction(ScalarFunction):
     """``redact(text, language)`` -- tag-redact in a given language."""
 
     class Meta:
+        """Function metadata."""
+
         name = "redact"
         description = "Replace each PII entity with its type tag, in a given language"
         categories = ["pii", "redact"]
@@ -157,6 +168,7 @@ class RedactLanguageFunction(ScalarFunction):
         text: Annotated[pa.StringArray, Param(doc="Text to redact.")],
         language: Annotated[str, ConstParam("ISO language code, e.g. 'en'.")],
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         return _map_str(text, lambda x: engine.redact(x, language))
 
 
@@ -169,6 +181,8 @@ class AnonymizeFunction(ScalarFunction):
     """``anonymize(text)`` -- mask each entity's characters with ``*``."""
 
     class Meta:
+        """Function metadata."""
+
         name = "anonymize"
         description = "Replace each PII entity's characters with a '*' mask (language 'en')"
         categories = ["pii", "redact"]
@@ -183,6 +197,7 @@ class AnonymizeFunction(ScalarFunction):
     def compute(
         cls, text: Annotated[pa.StringArray, Param(doc="Text to anonymize.")]
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         return _map_str(text, lambda x: engine.anonymize(x, _DEFAULT_LANGUAGE))
 
 
@@ -190,6 +205,8 @@ class AnonymizeLanguageFunction(ScalarFunction):
     """``anonymize(text, language)`` -- mask each entity in a given language."""
 
     class Meta:
+        """Function metadata."""
+
         name = "anonymize"
         description = "Replace each PII entity's characters with a '*' mask, in a given language"
         categories = ["pii", "redact"]
@@ -206,6 +223,7 @@ class AnonymizeLanguageFunction(ScalarFunction):
         text: Annotated[pa.StringArray, Param(doc="Text to anonymize.")],
         language: Annotated[str, ConstParam("ISO language code, e.g. 'en'.")],
     ) -> Annotated[pa.StringArray, Returns()]:
+        """Map each input row to its output value."""
         return _map_str(text, lambda x: engine.anonymize(x, language))
 
 
@@ -218,6 +236,8 @@ class PiiTypesFunction(ScalarFunction):
     """``pii_types(text)`` -- distinct entity types present, as ``VARCHAR[]``."""
 
     class Meta:
+        """Function metadata."""
+
         name = "pii_types"
         description = "Distinct PII entity types present in text, as a sorted VARCHAR[] (language 'en')"
         categories = ["pii", "detect"]
@@ -232,6 +252,7 @@ class PiiTypesFunction(ScalarFunction):
     def compute(
         cls, text: Annotated[pa.StringArray, Param(doc="Text to scan for PII types.")]
     ) -> Annotated[pa.ListArray, Returns(arrow_type=pa.list_(pa.string()))]:
+        """Map each input row to its output value."""
         return _map_list(text, lambda x: engine.pii_types(x, _DEFAULT_LANGUAGE))
 
 
@@ -239,6 +260,8 @@ class PiiTypesLanguageFunction(ScalarFunction):
     """``pii_types(text, language)`` -- distinct entity types in a language."""
 
     class Meta:
+        """Function metadata."""
+
         name = "pii_types"
         description = "Distinct PII entity types present in text, in a given language, as VARCHAR[]"
         categories = ["pii", "detect"]
@@ -255,6 +278,7 @@ class PiiTypesLanguageFunction(ScalarFunction):
         text: Annotated[pa.StringArray, Param(doc="Text to scan for PII types.")],
         language: Annotated[str, ConstParam("ISO language code, e.g. 'en'.")],
     ) -> Annotated[pa.ListArray, Returns(arrow_type=pa.list_(pa.string()))]:
+        """Map each input row to its output value."""
         return _map_list(text, lambda x: engine.pii_types(x, language))
 
 

@@ -108,9 +108,7 @@ class TestThreshold:
         assert len(high) <= len(low)
 
     def test_threshold_monotonic_on_multi(self) -> None:
-        assert len(engine.detect(MULTI, score_threshold=0.95)) <= len(
-            engine.detect(MULTI, score_threshold=0.1)
-        )
+        assert len(engine.detect(MULTI, score_threshold=0.95)) <= len(engine.detect(MULTI, score_threshold=0.1))
 
 
 class TestSupportedEntities:
