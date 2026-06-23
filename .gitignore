@@ -11,4 +11,3 @@ models/
 .cache/
 *.coverage
 .coverage
-uv.lock

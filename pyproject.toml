@@ -18,7 +18,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "vgi-python",
+    "vgi-python>=0.8.3",
     "presidio-analyzer>=2.2",
     "presidio-anonymizer>=2.2",
     "spacy>=3.7",
@@ -37,9 +37,6 @@ dev = [
 Homepage = "https://query.farm"
 
 [tool.uv.sources]
-# Develop against the local vgi-python checkout (sibling directory). Drop or
-# override this block to resolve vgi-python from an index instead.
-vgi-python = { path = "../vgi-python" }
 # Pin the small English spaCy pipeline (~12 MB, MIT) as a wheel so it is
 # installed (never downloaded at runtime). Presidio defaults to en_core_web_lg
 # (~400 MB) otherwise; engine.py wires the analyzer to this small model.
