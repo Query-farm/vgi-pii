@@ -65,18 +65,64 @@ _CATALOG_DESCRIPTION_MD = (
 )
 
 _MAIN_DESCRIPTION_LLM = (
-    "PII detection and redaction functions over free text: has_pii, pii_types, redact, anonymize "
-    "(per-row scalars) plus detect_pii and supported_entities (table functions)."
+    "## main\n\n"
+    "The `main` schema groups every PII function in the `pii` catalog. Reach for it whenever "
+    "you need to find, scrub, or audit personally-identifiable information in a text column.\n\n"
+    "- **Scalars (one value per row):** `has_pii` (boolean predicate), `pii_types` (sorted "
+    "`VARCHAR[]` of distinct entity types), `redact` (replace each entity with a `<TYPE>` tag), "
+    "and `anonymize` (mask each entity's characters with `*`). Each takes an optional ISO "
+    "`language` argument (defaults to `'en'`).\n"
+    "- **Table functions (one row per result):** `detect_pii` (one row per entity, with offsets "
+    "and confidence; supports `score_threshold`) and `supported_entities` (the entity types the "
+    "analyzer can detect).\n\n"
+    "All detection is powered by Microsoft Presidio with the `en_core_web_sm` spaCy model; "
+    "NULL/blank input is handled gracefully (NULL or no rows)."
 )
 
 _MAIN_DESCRIPTION_MD = (
-    "PII detection and redaction functions powered by Microsoft Presidio: `has_pii`, `pii_types`, "
-    "`redact`, `anonymize`, `detect_pii`, `supported_entities`."
+    "# main\n\n"
+    "PII detection and redaction over free text, exposed as DuckDB scalar and table "
+    "functions.\n\n"
+    "## Functions\n\n"
+    "| function | kind | purpose |\n"
+    "|---|---|---|\n"
+    "| `has_pii` | scalar | `true` if any PII is present |\n"
+    "| `pii_types` | scalar | distinct entity types as `VARCHAR[]` |\n"
+    "| `redact` | scalar | replace entities with `<TYPE>` tags |\n"
+    "| `anonymize` | scalar | mask entity characters with `*` |\n"
+    "| `detect_pii` | table | one row per entity with offsets and score |\n"
+    "| `supported_entities` | table | the entity types the analyzer detects |\n\n"
+    "## Notes\n\n"
+    "Scalars take an optional `language`; table functions accept named arguments "
+    "(`language :=`, `score_threshold :=`). Powered by "
+    "[Microsoft Presidio](https://microsoft.github.io/presidio/)."
+)
+
+_MAIN_EXAMPLE_QUERIES = (
+    "SELECT pii.main.has_pii('Call John Smith at john@example.com');\n"
+    "SELECT pii.main.redact('Call John Smith at john@example.com');\n"
+    "SELECT pii.main.anonymize('Call John Smith at john@example.com');\n"
+    "SELECT pii.main.pii_types('Call John Smith at john@example.com');\n"
+    "SELECT * FROM pii.main.detect_pii('Call John Smith at john@example.com') ORDER BY start;\n"
+    "SELECT * FROM pii.main.supported_entities() ORDER BY entity_type;"
+)
+
+_CATALOG_KEYWORDS = (
+    "pii, personally identifiable information, redaction, anonymization, privacy, presidio, "
+    "data loss prevention, dlp, sensitive data, person, email, phone, credit card, ssn, "
+    "location, ip address, url, text scrubbing, masking"
+)
+
+_MAIN_KEYWORDS = (
+    "pii, detect, redact, anonymize, mask, entity types, has_pii, pii_types, detect_pii, "
+    "supported_entities, privacy, presidio, sensitive data"
 )
 
 _CATALOG_TAGS = {
-    "vgi.description_llm": _CATALOG_DESCRIPTION_LLM,
-    "vgi.description_md": _CATALOG_DESCRIPTION_MD,
+    "vgi.title": "PII Detection & Redaction",
+    "vgi.keywords": _CATALOG_KEYWORDS,
+    "vgi.doc_llm": _CATALOG_DESCRIPTION_LLM,
+    "vgi.doc_md": _CATALOG_DESCRIPTION_MD,
     "vgi.author": "Query.Farm",
     "vgi.copyright": "Copyright 2026 Query Farm LLC - https://query.farm",
     "vgi.license": "MIT",
@@ -95,8 +141,16 @@ _PII_CATALOG = Catalog(
             name="main",
             comment="Detect, list, redact, and anonymize PII entities in free text",
             tags={
-                "vgi.description_llm": _MAIN_DESCRIPTION_LLM,
-                "vgi.description_md": _MAIN_DESCRIPTION_MD,
+                "vgi.title": "PII Functions — main",
+                "vgi.keywords": _MAIN_KEYWORDS,
+                "vgi.source_url": "https://github.com/Query-farm/vgi-pii/blob/main/pii_worker.py",
+                "vgi.doc_llm": _MAIN_DESCRIPTION_LLM,
+                "vgi.doc_md": _MAIN_DESCRIPTION_MD,
+                "vgi.example_queries": _MAIN_EXAMPLE_QUERIES,
+                # VGI123 classifying tags — BARE keys (not vgi.-namespaced).
+                "domain": "security",
+                "category": "parsing",
+                "topic": "pii-detection-and-redaction",
             },
             functions=[*SCALAR_FUNCTIONS, *TABLE_FUNCTIONS],
         ),

@@ -37,8 +37,152 @@ from vgi.metadata import FunctionExample
 from vgi.scalar_function import ScalarFunction
 
 from . import engine
+from .meta import object_tags
 
 _DEFAULT_LANGUAGE = "en"
+
+_SCALARS_SOURCE = "vgi_pii/scalars.py"
+
+# Per-object discovery/description tags, shared by both arity overloads of each
+# scalar (the no-language and explicit-language forms share a function name, so
+# both must carry identical object-level metadata).
+_HAS_PII_TAGS = object_tags(
+    title="Detect PII Presence",
+    doc_llm=(
+        "## has_pii\n\n"
+        "Return `true` when the input text contains **any** personally-identifiable "
+        "information (PII) entity, otherwise `false`. Use it as a fast boolean predicate "
+        "to flag or filter rows that need privacy handling, before deciding to redact or "
+        "anonymize them.\n\n"
+        "- **Input:** a `VARCHAR` of free text; an optional second argument is the ISO "
+        "language code (defaults to `'en'`).\n"
+        "- **Output:** `BOOLEAN` -- `true` if at least one entity (PERSON, EMAIL_ADDRESS, "
+        "PHONE_NUMBER, CREDIT_CARD, US_SSN, LOCATION, URL, IP_ADDRESS, ...) is detected.\n"
+        "- **Edge cases:** `NULL`, empty, or whitespace-only input returns `NULL`.\n\n"
+        "Backed by Microsoft Presidio (analyzer) with the `en_core_web_sm` spaCy model."
+    ),
+    doc_md=(
+        "# has_pii\n\n"
+        "A scalar predicate that answers a single question: *does this text contain PII?*\n\n"
+        "## Usage\n\n"
+        "```sql\n"
+        "SELECT pii.has_pii('Call John Smith at john@example.com');  -- true\n"
+        "SELECT id FROM messages WHERE pii.has_pii(body);            -- rows needing scrubbing\n"
+        "```\n\n"
+        "## Notes\n\n"
+        "Pass an explicit language as the second argument (`has_pii(text, 'en')`) to scan "
+        "non-English text. NULL or blank input yields NULL rather than `false`."
+    ),
+    keywords="pii, has_pii, detect, contains pii, sensitive data, privacy, dlp, predicate, boolean",
+    relative_path=_SCALARS_SOURCE,
+)
+
+_REDACT_TAGS = object_tags(
+    title="Redact PII With Type Tags",
+    doc_llm=(
+        "## redact\n\n"
+        "Return the input text with every detected PII span replaced by a tag naming its "
+        "entity type, e.g. `<PERSON>` or `<EMAIL_ADDRESS>`. Use it when you want a "
+        "human-readable, *self-documenting* scrub that preserves which kind of value was "
+        "removed (useful for audit, debugging, and downstream classification).\n\n"
+        "- **Input:** a `VARCHAR` of free text; an optional second argument is the ISO "
+        "language code (defaults to `'en'`).\n"
+        "- **Output:** `VARCHAR` -- the same text with each entity replaced by `<TYPE>`.\n"
+        "- **Example:** `'Call John Smith at john@example.com'` -> "
+        "`'Call <PERSON> at <EMAIL_ADDRESS>'`.\n"
+        "- **Edge cases:** `NULL`, empty, or whitespace-only input returns `NULL`; text "
+        "with no PII is returned unchanged.\n\n"
+        "Contrast with `anonymize`, which masks characters (`****`) instead of labelling "
+        "them. Backed by Microsoft Presidio (analyzer + anonymizer)."
+    ),
+    doc_md=(
+        "# redact\n\n"
+        "Replace each PII entity in text with a tag that names its type, leaving the "
+        "surrounding text intact.\n\n"
+        "## Usage\n\n"
+        "```sql\n"
+        "SELECT pii.redact('Call John Smith at john@example.com');\n"
+        "-- 'Call <PERSON> at <EMAIL_ADDRESS>'\n"
+        "```\n\n"
+        "## Notes\n\n"
+        "Use `redact` when you want to know *what kind* of value was removed; use "
+        "`anonymize` when you want the value's shape hidden behind a `*` mask. Accepts an "
+        "explicit language as the second argument. NULL/blank input yields NULL."
+    ),
+    keywords="pii, redact, mask, replace, scrub, type tag, person, email, privacy, sanitize",
+    relative_path=_SCALARS_SOURCE,
+)
+
+_ANONYMIZE_TAGS = object_tags(
+    title="Anonymize PII With Character Mask",
+    doc_llm=(
+        "## anonymize\n\n"
+        "Return the input text with every detected PII span overwritten character-for-"
+        "character by a `*` mask, so the value is hidden but its length/position is "
+        "preserved. Use it for display or export where the *shape* of the data can remain "
+        "but the value must not.\n\n"
+        "- **Input:** a `VARCHAR` of free text; an optional second argument is the ISO "
+        "language code (defaults to `'en'`).\n"
+        "- **Output:** `VARCHAR` -- the same text with each entity replaced by `*` characters.\n"
+        "- **Example:** `'Call John Smith at john@example.com'` -> "
+        "`'Call **** at ****************'`.\n"
+        "- **Edge cases:** `NULL`, empty, or whitespace-only input returns `NULL`; text "
+        "with no PII is returned unchanged.\n\n"
+        "Contrast with `redact`, which labels each entity with a `<TYPE>` tag. Backed by "
+        "Microsoft Presidio (analyzer + anonymizer)."
+    ),
+    doc_md=(
+        "# anonymize\n\n"
+        "Mask each PII entity in text with `*` characters, hiding the value while keeping "
+        "the rest of the text readable.\n\n"
+        "## Usage\n\n"
+        "```sql\n"
+        "SELECT pii.anonymize('Call John Smith at john@example.com');\n"
+        "-- 'Call **** at ****************'\n"
+        "```\n\n"
+        "## Notes\n\n"
+        "Choose `anonymize` over `redact` when the type label `<PERSON>` would itself leak "
+        "structure you want hidden. Accepts an explicit language as the second argument. "
+        "NULL/blank input yields NULL."
+    ),
+    keywords="pii, anonymize, mask, asterisk, obfuscate, hide, scrub, privacy, sanitize, redact",
+    relative_path=_SCALARS_SOURCE,
+)
+
+_PII_TYPES_TAGS = object_tags(
+    title="List Distinct PII Types",
+    doc_llm=(
+        "## pii_types\n\n"
+        "Return the **distinct** PII entity types present in the input text as a sorted "
+        "`VARCHAR[]`. Use it to summarise what categories of sensitive data a value "
+        "contains -- e.g. to drive routing, alerting, or per-type handling -- without "
+        "needing the per-span detail of `detect_pii`.\n\n"
+        "- **Input:** a `VARCHAR` of free text; an optional second argument is the ISO "
+        "language code (defaults to `'en'`).\n"
+        "- **Output:** `VARCHAR[]` -- the sorted, de-duplicated set of detected entity "
+        "type names, e.g. `['EMAIL_ADDRESS', 'PERSON']`.\n"
+        "- **Edge cases:** `NULL`, empty, or whitespace-only input returns `NULL`; text "
+        "with no PII returns an empty list.\n\n"
+        "For one row per occurrence (with offsets and confidence) use the `detect_pii` "
+        "table function instead. Backed by Microsoft Presidio."
+    ),
+    doc_md=(
+        "# pii_types\n\n"
+        "Return the set of PII entity types found in text, sorted and de-duplicated, as a "
+        "`VARCHAR[]`.\n\n"
+        "## Usage\n\n"
+        "```sql\n"
+        "SELECT pii.pii_types('Call John Smith at john@example.com');\n"
+        "-- ['EMAIL_ADDRESS', 'PERSON']\n"
+        "```\n\n"
+        "## Notes\n\n"
+        "This is a compact summary; for per-occurrence detail (matched text, offsets, "
+        "confidence) use `detect_pii`. Accepts an explicit language as the second "
+        "argument. NULL/blank input yields NULL; PII-free text yields an empty list."
+    ),
+    keywords="pii, pii_types, entity types, categories, list, distinct, classify, privacy, summary",
+    relative_path=_SCALARS_SOURCE,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +220,7 @@ class HasPiiFunction(ScalarFunction):
         name = "has_pii"
         description = "True if any PII entity is detected in text (language defaults to 'en')"
         categories = ["pii", "detect"]
+        tags = _HAS_PII_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.has_pii('Call John Smith at john@example.com')",
@@ -100,6 +245,7 @@ class HasPiiLanguageFunction(ScalarFunction):
         name = "has_pii"
         description = "True if any PII entity is detected in text, in a given language"
         categories = ["pii", "detect"]
+        tags = _HAS_PII_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.has_pii('Call John Smith at john@example.com', 'en')",
@@ -131,6 +277,7 @@ class RedactFunction(ScalarFunction):
         name = "redact"
         description = "Replace each PII entity with its type tag, e.g. '<PERSON>' (language 'en')"
         categories = ["pii", "redact"]
+        tags = _REDACT_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.redact('Call John Smith at john@example.com')",
@@ -155,6 +302,7 @@ class RedactLanguageFunction(ScalarFunction):
         name = "redact"
         description = "Replace each PII entity with its type tag, in a given language"
         categories = ["pii", "redact"]
+        tags = _REDACT_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.redact('Call John Smith at john@example.com', 'en')",
@@ -186,6 +334,7 @@ class AnonymizeFunction(ScalarFunction):
         name = "anonymize"
         description = "Replace each PII entity's characters with a '*' mask (language 'en')"
         categories = ["pii", "redact"]
+        tags = _ANONYMIZE_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.anonymize('Call John Smith at john@example.com')",
@@ -210,6 +359,7 @@ class AnonymizeLanguageFunction(ScalarFunction):
         name = "anonymize"
         description = "Replace each PII entity's characters with a '*' mask, in a given language"
         categories = ["pii", "redact"]
+        tags = _ANONYMIZE_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.anonymize('Call John Smith at john@example.com', 'en')",
@@ -241,6 +391,7 @@ class PiiTypesFunction(ScalarFunction):
         name = "pii_types"
         description = "Distinct PII entity types present in text, as a sorted VARCHAR[] (language 'en')"
         categories = ["pii", "detect"]
+        tags = _PII_TYPES_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.pii_types('Call John Smith at john@example.com')",
@@ -265,6 +416,7 @@ class PiiTypesLanguageFunction(ScalarFunction):
         name = "pii_types"
         description = "Distinct PII entity types present in text, in a given language, as VARCHAR[]"
         categories = ["pii", "detect"]
+        tags = _PII_TYPES_TAGS
         examples = [
             FunctionExample(
                 sql="SELECT pii.pii_types('Call John Smith at john@example.com', 'en')",
