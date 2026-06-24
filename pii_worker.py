@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python>=0.8.3",
+#     "vgi-python[http]>=0.8.3",
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
