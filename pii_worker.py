@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.8.3",
+#     "vgi-python[http]>=0.8.4",
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
@@ -44,13 +44,60 @@ from vgi_pii import engine
 from vgi_pii.scalars import SCALAR_FUNCTIONS
 from vgi_pii.tables import TABLE_FUNCTIONS
 
+_CATALOG_DESCRIPTION_LLM = (
+    "Detect and redact personally-identifiable information (PII) in free text directly in SQL, "
+    "backed by Microsoft Presidio (analyzer + anonymizer) and a spaCy NLP model. Find whether "
+    "text contains PII (has_pii), list the distinct entity types present (pii_types), replace each "
+    "entity with its type tag (redact, e.g. '<PERSON>'), mask each entity's characters (anonymize), "
+    "enumerate every detected entity with offsets and confidence (detect_pii), and discover the "
+    "entity types the analyzer supports (supported_entities). Detected types include PERSON, "
+    "EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, US_SSN, LOCATION, URL, IP_ADDRESS and more. Use for "
+    "privacy scrubbing, data-loss-prevention checks, and PII auditing of text columns."
+)
+
+_CATALOG_DESCRIPTION_MD = (
+    "# pii\n\n"
+    "Detect and redact PII in free text (person names, emails, phone numbers, credit cards, SSNs, "
+    "locations, URLs, IP addresses, …) directly in SQL, powered by "
+    "[Microsoft Presidio](https://microsoft.github.io/presidio/).\n\n"
+    "**Scalars:** `has_pii`, `pii_types`, `redact`, `anonymize`.\n\n"
+    "**Table functions:** `detect_pii`, `supported_entities`."
+)
+
+_MAIN_DESCRIPTION_LLM = (
+    "PII detection and redaction functions over free text: has_pii, pii_types, redact, anonymize "
+    "(per-row scalars) plus detect_pii and supported_entities (table functions)."
+)
+
+_MAIN_DESCRIPTION_MD = (
+    "PII detection and redaction functions powered by Microsoft Presidio: `has_pii`, `pii_types`, "
+    "`redact`, `anonymize`, `detect_pii`, `supported_entities`."
+)
+
+_CATALOG_TAGS = {
+    "vgi.description_llm": _CATALOG_DESCRIPTION_LLM,
+    "vgi.description_md": _CATALOG_DESCRIPTION_MD,
+    "vgi.author": "Query.Farm",
+    "vgi.copyright": "Copyright 2026 Query Farm LLC - https://query.farm",
+    "vgi.license": "MIT",
+    "vgi.support_contact": "https://github.com/Query-farm/vgi-pii/issues",
+    "vgi.support_policy_url": "https://github.com/Query-farm/vgi-pii/blob/main/README.md",
+}
+
 _PII_CATALOG = Catalog(
     name="pii",
     default_schema="main",
+    comment="PII detection + redaction for SQL, powered by Microsoft Presidio",
+    source_url="https://github.com/Query-farm/vgi-pii",
+    tags=_CATALOG_TAGS,
     schemas=[
         Schema(
             name="main",
-            comment="Detect + redact PII in text (Microsoft Presidio) for SQL",
+            comment="Detect, list, redact, and anonymize PII entities in free text",
+            tags={
+                "vgi.description_llm": _MAIN_DESCRIPTION_LLM,
+                "vgi.description_md": _MAIN_DESCRIPTION_MD,
+            },
             functions=[*SCALAR_FUNCTIONS, *TABLE_FUNCTIONS],
         ),
     ],

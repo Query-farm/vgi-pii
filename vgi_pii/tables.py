@@ -80,6 +80,17 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
         name = "detect_pii"
         description = "One row per detected PII entity (entity_type, text, start, end_pos, score)"
         categories = ["pii", "detect"]
+        tags = {
+            "vgi.columns_md": (
+                "| column | type | description |\n"
+                "|---|---|---|\n"
+                "| `entity_type` | VARCHAR | Detected PII entity type, e.g. `PERSON`, `EMAIL_ADDRESS`. |\n"
+                "| `text` | VARCHAR | The matched substring from the input. |\n"
+                "| `start` | INTEGER | Start character offset (inclusive). |\n"
+                "| `end_pos` | INTEGER | End character offset (exclusive). |\n"
+                "| `score` | DOUBLE | Detection confidence in `[0, 1]`. |"
+            ),
+        }
         examples = [
             FunctionExample(
                 sql="SELECT * FROM pii.detect_pii('Call John Smith at john@example.com')",
@@ -141,6 +152,13 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
         name = "supported_entities"
         description = "Every PII entity type the analyzer can detect (PERSON, EMAIL_ADDRESS, ...)"
         categories = ["pii", "detect"]
+        tags = {
+            "vgi.columns_md": (
+                "| column | type | description |\n"
+                "|---|---|---|\n"
+                "| `entity_type` | VARCHAR | An entity type the analyzer can detect, e.g. `PERSON`. |"
+            ),
+        }
         examples = [
             FunctionExample(
                 sql="SELECT * FROM pii.supported_entities() ORDER BY entity_type",
