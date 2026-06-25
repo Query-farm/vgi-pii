@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.8.4",
+#     "vgi-python[http]>=0.8.5",
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
@@ -35,6 +35,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from vgi import Worker
@@ -107,20 +108,49 @@ _MAIN_EXAMPLE_QUERIES = (
     "SELECT * FROM pii.main.supported_entities() ORDER BY entity_type;"
 )
 
-_CATALOG_KEYWORDS = (
-    "pii, personally identifiable information, redaction, anonymization, privacy, presidio, "
-    "data loss prevention, dlp, sensitive data, person, email, phone, credit card, ssn, "
-    "location, ip address, url, text scrubbing, masking"
-)
+# vgi.keywords must be a JSON array of strings (VGI138), not a comma-separated
+# string; serialized below via json.dumps.
+_CATALOG_KEYWORDS = [
+    "pii",
+    "personally identifiable information",
+    "redaction",
+    "anonymization",
+    "privacy",
+    "presidio",
+    "data loss prevention",
+    "dlp",
+    "sensitive data",
+    "person",
+    "email",
+    "phone",
+    "credit card",
+    "ssn",
+    "location",
+    "ip address",
+    "url",
+    "text scrubbing",
+    "masking",
+]
 
-_MAIN_KEYWORDS = (
-    "pii, detect, redact, anonymize, mask, entity types, has_pii, pii_types, detect_pii, "
-    "supported_entities, privacy, presidio, sensitive data"
-)
+_MAIN_KEYWORDS = [
+    "pii",
+    "detect",
+    "redact",
+    "anonymize",
+    "mask",
+    "entity types",
+    "has_pii",
+    "pii_types",
+    "detect_pii",
+    "supported_entities",
+    "privacy",
+    "presidio",
+    "sensitive data",
+]
 
 _CATALOG_TAGS = {
     "vgi.title": "PII Detection & Redaction",
-    "vgi.keywords": _CATALOG_KEYWORDS,
+    "vgi.keywords": json.dumps(_CATALOG_KEYWORDS),
     "vgi.doc_llm": _CATALOG_DESCRIPTION_LLM,
     "vgi.doc_md": _CATALOG_DESCRIPTION_MD,
     "vgi.author": "Query.Farm",
@@ -142,8 +172,7 @@ _PII_CATALOG = Catalog(
             comment="Detect, list, redact, and anonymize PII entities in free text",
             tags={
                 "vgi.title": "PII Functions — main",
-                "vgi.keywords": _MAIN_KEYWORDS,
-                "vgi.source_url": "https://github.com/Query-farm/vgi-pii/blob/main/pii_worker.py",
+                "vgi.keywords": json.dumps(_MAIN_KEYWORDS),
                 "vgi.doc_llm": _MAIN_DESCRIPTION_LLM,
                 "vgi.doc_md": _MAIN_DESCRIPTION_MD,
                 "vgi.example_queries": _MAIN_EXAMPLE_QUERIES,

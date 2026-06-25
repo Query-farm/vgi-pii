@@ -34,8 +34,6 @@ from . import engine
 from .meta import object_tags
 from .schema_utils import field
 
-_TABLES_SOURCE = "vgi_pii/tables.py"
-
 _LANGUAGE = Arg[str]("language", default="en", doc="ISO language code (e.g. 'en').")
 _SCORE_THRESHOLD = Arg[float](
     "score_threshold",
@@ -157,11 +155,20 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                     "`end` is a SQL keyword). NULL/blank text returns no rows. Use the optional "
                     "`language` and `score_threshold` named arguments to tune detection."
                 ),
-                keywords=(
-                    "pii, detect_pii, entities, spans, offsets, score, confidence, table function, "
-                    "person, email, audit, privacy"
-                ),
-                relative_path=_TABLES_SOURCE,
+                keywords=[
+                    "pii",
+                    "detect_pii",
+                    "entities",
+                    "spans",
+                    "offsets",
+                    "score",
+                    "confidence",
+                    "table function",
+                    "person",
+                    "email",
+                    "audit",
+                    "privacy",
+                ],
             ),
             "vgi.result_columns_md": (
                 "| column | type | description |\n"
@@ -265,11 +272,18 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
                     "language. The returned names are exactly the values `detect_pii.entity_type` "
                     "and `pii_types` can produce."
                 ),
-                keywords=(
-                    "pii, supported_entities, entity types, recognizers, discovery, catalog, "
-                    "coverage, person, email, privacy"
-                ),
-                relative_path=_TABLES_SOURCE,
+                keywords=[
+                    "pii",
+                    "supported_entities",
+                    "entity types",
+                    "recognizers",
+                    "discovery",
+                    "catalog",
+                    "coverage",
+                    "person",
+                    "email",
+                    "privacy",
+                ],
             ),
             "vgi.result_columns_md": (
                 "| column | type | description |\n"

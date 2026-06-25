@@ -41,8 +41,6 @@ from .meta import object_tags
 
 _DEFAULT_LANGUAGE = "en"
 
-_SCALARS_SOURCE = "vgi_pii/scalars.py"
-
 # Per-object discovery/description tags, shared by both arity overloads of each
 # scalar (the no-language and explicit-language forms share a function name, so
 # both must carry identical object-level metadata).
@@ -73,8 +71,17 @@ _HAS_PII_TAGS = object_tags(
         "Pass an explicit language as the second argument (`has_pii(text, 'en')`) to scan "
         "non-English text. NULL or blank input yields NULL rather than `false`."
     ),
-    keywords="pii, has_pii, detect, contains pii, sensitive data, privacy, dlp, predicate, boolean",
-    relative_path=_SCALARS_SOURCE,
+    keywords=[
+        "pii",
+        "has_pii",
+        "detect",
+        "contains pii",
+        "sensitive data",
+        "privacy",
+        "dlp",
+        "predicate",
+        "boolean",
+    ],
 )
 
 _REDACT_TAGS = object_tags(
@@ -109,8 +116,18 @@ _REDACT_TAGS = object_tags(
         "`anonymize` when you want the value's shape hidden behind a `*` mask. Accepts an "
         "explicit language as the second argument. NULL/blank input yields NULL."
     ),
-    keywords="pii, redact, mask, replace, scrub, type tag, person, email, privacy, sanitize",
-    relative_path=_SCALARS_SOURCE,
+    keywords=[
+        "pii",
+        "redact",
+        "mask",
+        "replace",
+        "scrub",
+        "type tag",
+        "person",
+        "email",
+        "privacy",
+        "sanitize",
+    ],
 )
 
 _ANONYMIZE_TAGS = object_tags(
@@ -145,8 +162,18 @@ _ANONYMIZE_TAGS = object_tags(
         "structure you want hidden. Accepts an explicit language as the second argument. "
         "NULL/blank input yields NULL."
     ),
-    keywords="pii, anonymize, mask, asterisk, obfuscate, hide, scrub, privacy, sanitize, redact",
-    relative_path=_SCALARS_SOURCE,
+    keywords=[
+        "pii",
+        "anonymize",
+        "mask",
+        "asterisk",
+        "obfuscate",
+        "hide",
+        "scrub",
+        "privacy",
+        "sanitize",
+        "redact",
+    ],
 )
 
 _PII_TYPES_TAGS = object_tags(
@@ -180,8 +207,17 @@ _PII_TYPES_TAGS = object_tags(
         "confidence) use `detect_pii`. Accepts an explicit language as the second "
         "argument. NULL/blank input yields NULL; PII-free text yields an empty list."
     ),
-    keywords="pii, pii_types, entity types, categories, list, distinct, classify, privacy, summary",
-    relative_path=_SCALARS_SOURCE,
+    keywords=[
+        "pii",
+        "pii_types",
+        "entity types",
+        "categories",
+        "list",
+        "distinct",
+        "classify",
+        "privacy",
+        "summary",
+    ],
 )
 
 

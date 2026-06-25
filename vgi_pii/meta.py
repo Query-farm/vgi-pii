@@ -1,9 +1,9 @@
 """Shared per-object discovery/description metadata for the pii worker.
 
-The ``vgi-lint-check`` strict profile (0.26.0) expects a consistent set of
-tags on **every** function and table so agents and humans can discover,
-understand, and run each object. This module centralises those tags so each
-scalar/table only declares its own content once.
+The ``vgi-lint-check`` strict profile expects a consistent set of tags on
+**every** function and table so agents and humans can discover, understand, and
+run each object. This module centralises those tags so each scalar/table only
+declares its own content once.
 
 Tags emitted on each object (with the rule that gates them):
 
@@ -15,30 +15,32 @@ Tags emitted on each object (with the rule that gates them):
   cases.
 - ``vgi.doc_md`` (VGI113)      -- a Markdown narrative aimed at human docs:
   overview, usage, and notes. Distinct content from ``vgi.doc_llm``.
-- ``vgi.keywords`` (VGI126)    -- comma-separated search terms / synonyms.
-- ``vgi.source_url`` (VGI128)  -- link to the implementing source file.
+- ``vgi.keywords`` (VGI126/VGI138) -- search terms / synonyms, serialized as a
+  JSON array of strings (``["a", "b"]``), never a comma-separated string.
 
-``source_url(path)`` builds the canonical GitHub blob URL (pinned to ``main``)
-for a file under the repository root.
+``vgi.source_url`` is intentionally **not** set per object (VGI139): the
+source link belongs only on the catalog object.
 """
 
 from __future__ import annotations
 
-# Base GitHub blob URL for source files in this repo (pinned to ``main``).
-_SOURCE_BASE = "https://github.com/Query-farm/vgi-pii/blob/main"
+import json
+from collections.abc import Sequence
 
 
-def source_url(relative_path: str) -> str:
-    """Build the canonical ``vgi.source_url`` for a repo-relative source file.
+def keywords_json(keywords: Sequence[str]) -> str:
+    """Serialize keywords as a JSON array of strings (``vgi.keywords``).
+
+    VGI138 requires ``vgi.keywords`` to be a JSON array like ``["a", "b"]`` and
+    rejects a comma-separated string.
 
     Args:
-        relative_path: Path to the file relative to the repository root, e.g.
-            ``"vgi_pii/scalars.py"``.
+        keywords: Individual search terms / synonyms for the object.
 
     Returns:
-        The GitHub blob URL for that file, pinned to ``main``.
+        The keywords encoded as a JSON array-of-strings literal.
     """
-    return f"{_SOURCE_BASE}/{relative_path}"
+    return json.dumps(list(keywords))
 
 
 def object_tags(
@@ -46,27 +48,24 @@ def object_tags(
     title: str,
     doc_llm: str,
     doc_md: str,
-    keywords: str,
-    relative_path: str,
+    keywords: Sequence[str],
 ) -> dict[str, str]:
-    """Build the five standard per-object discovery/description tags.
+    """Build the standard per-object discovery/description tags.
 
     Args:
         title: Human-friendly display name (``vgi.title``).
         doc_llm: Markdown narrative for an LLM/agent audience (``vgi.doc_llm``).
         doc_md: Markdown narrative for human docs (``vgi.doc_md``).
-        keywords: Comma-separated search terms/synonyms (``vgi.keywords``).
-        relative_path: Implementing file relative to the repo root, used to build
-            ``vgi.source_url``.
+        keywords: Search terms/synonyms; serialized to a JSON array string for
+            ``vgi.keywords`` (VGI138).
 
     Returns:
-        A dict of the five tag keys to their values, ready to merge into a
-        function's ``Meta.tags``.
+        A dict of the tag keys to their values, ready to merge into a function's
+        ``Meta.tags``.
     """
     return {
         "vgi.title": title,
         "vgi.doc_llm": doc_llm,
         "vgi.doc_md": doc_md,
-        "vgi.keywords": keywords,
-        "vgi.source_url": source_url(relative_path),
+        "vgi.keywords": keywords_json(keywords),
     }
