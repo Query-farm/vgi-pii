@@ -58,6 +58,7 @@ _CATALOG_DESCRIPTION_LLM = (
 
 _CATALOG_DESCRIPTION_MD = (
     "# PII Detection & Redaction in SQL\n\n"
+    "![Microsoft Presidio logo](https://raw.githubusercontent.com/microsoft/presidio/main/docs/assets/dps-icon.svg)\n\n"
     "**Find, redact, and anonymize personally-identifiable information (PII) in free text "
     "directly from DuckDB SQL** — person names, email addresses, phone numbers, credit-card "
     "numbers, US SSNs, locations, URLs, IP addresses and more — powered by "
