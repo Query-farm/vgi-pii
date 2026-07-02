@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.8.5",
+#     "vgi-python[http]>=0.9.0",
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
@@ -77,21 +77,17 @@ _CATALOG_DESCRIPTION_MD = (
     "this NLP model with pattern recognizers and checksum validation (for example, Luhn "
     "validation of credit-card numbers) to flag a broad catalog of entity types, each with a "
     "confidence score and character offsets you can inspect or threshold.\n\n"
-    "## SQL functions\n\n"
-    "The catalog exposes four scalar functions and two table functions in the `main` schema. "
-    "Use `has_pii(text)` as a boolean predicate to filter or flag rows that contain sensitive "
-    "data, and `pii_types(text)` to get the sorted `VARCHAR[]` of distinct entity types "
-    "present. Use `redact(text)` to replace each detected entity with a `<TYPE>` tag (for "
-    "example `<PERSON>`, `<EMAIL_ADDRESS>`) and `anonymize(text)` to mask each entity's "
-    "characters with `*`. For full visibility, the `detect_pii(text)` table function returns "
-    "one row per entity with its type, start/end offsets and confidence score (with an "
-    "optional `score_threshold`), and `supported_entities()` lists every entity type the "
-    "analyzer can detect. All scalars accept an optional ISO `language` argument (defaulting "
-    "to `'en'`), and NULL or blank input is handled gracefully.\n\n"
+    "## What you can do\n\n"
+    "Two complementary capabilities are grouped in the `main` schema. *Detection* answers "
+    "whether text holds sensitive data, which categories it holds, and exactly where each "
+    "value sits (with a confidence score you can threshold). *Redaction* rewrites the text so "
+    "the sensitive values are gone -- either labelled by the kind of value that was there, or "
+    "masked so even the shape is hidden. Detection powers filtering, alerting, and auditing; "
+    "redaction powers safe sharing, export, and archival. Every operation accepts an optional "
+    "ISO language argument (defaulting to English) and treats NULL or blank input gracefully.\n\n"
     "```sql\n"
     "SELECT pii.redact('Call John Smith at john@example.com');\n"
     "-- 'Call <PERSON> at <EMAIL_ADDRESS>'\n"
-    "SELECT * FROM pii.detect_pii('Call John Smith at john@example.com') ORDER BY start;\n"
     "```\n\n"
     "Learn more from the [Presidio documentation](https://microsoft.github.io/presidio/), the "
     "[Presidio source repository](https://github.com/microsoft/presidio), and the "
@@ -100,35 +96,40 @@ _CATALOG_DESCRIPTION_MD = (
 
 _MAIN_DESCRIPTION_LLM = (
     "## main\n\n"
-    "The `main` schema groups every PII function in the `pii` catalog. Reach for it whenever "
-    "you need to find, scrub, or audit personally-identifiable information in a text column.\n\n"
-    "- **Scalars (one value per row):** `has_pii` (boolean predicate), `pii_types` (sorted "
-    "`VARCHAR[]` of distinct entity types), `redact` (replace each entity with a `<TYPE>` tag), "
-    "and `anonymize` (mask each entity's characters with `*`). Each takes an optional ISO "
-    "`language` argument (defaults to `'en'`).\n"
-    "- **Table functions (one row per result):** `detect_pii` (one row per entity, with offsets "
-    "and confidence; supports `score_threshold`) and `supported_entities` (the entity types the "
-    "analyzer can detect).\n\n"
-    "All detection is powered by Microsoft Presidio with the `en_core_web_sm` spaCy model; "
-    "NULL/blank input is handled gracefully (NULL or no rows)."
+    "The main schema groups every PII capability in the pii catalog. Reach for it whenever you "
+    "need to find, scrub, or audit personally-identifiable information in a text column. Two "
+    "kinds of work live here.\n\n"
+    "- **Detection** tells you about the PII in a value without changing it: whether any is "
+    "present (a boolean predicate for filtering), which distinct entity types occur (as a "
+    "sorted array), the full per-occurrence detail (one row per entity with its type, character "
+    "offsets, and confidence score you can threshold), and which entity types the analyzer is "
+    "able to recognise at all.\n"
+    "- **Redaction** rewrites the text so the sensitive values are removed -- either replaced "
+    "by a tag naming the kind of value that was there, or masked character-for-character so "
+    "even the shape is hidden.\n\n"
+    "The per-row operations are scalars usable inline in any projection or predicate; the "
+    "per-occurrence and discovery operations are table functions. Every operation takes an "
+    "optional ISO language argument (defaulting to English). Detection is powered by Microsoft "
+    "Presidio with a spaCy NLP model; NULL or blank input is handled gracefully (NULL or no "
+    "rows). List the schema to discover the exact function names, signatures, and examples."
 )
 
 _MAIN_DESCRIPTION_MD = (
     "# main\n\n"
     "PII detection and redaction over free text, exposed as DuckDB scalar and table "
     "functions.\n\n"
-    "## Functions\n\n"
-    "| function | kind | purpose |\n"
-    "|---|---|---|\n"
-    "| `has_pii` | scalar | `true` if any PII is present |\n"
-    "| `pii_types` | scalar | distinct entity types as `VARCHAR[]` |\n"
-    "| `redact` | scalar | replace entities with `<TYPE>` tags |\n"
-    "| `anonymize` | scalar | mask entity characters with `*` |\n"
-    "| `detect_pii` | table | one row per entity with offsets and score |\n"
-    "| `supported_entities` | table | the entity types the analyzer detects |\n\n"
+    "## Detection vs. redaction\n\n"
+    "The schema offers two complementary kinds of operation. **Detection** inspects text "
+    "without changing it -- flag whether any PII is present, summarise which entity types "
+    "occur, enumerate each occurrence with its character offsets and confidence score, and "
+    "introspect which entity types the analyzer can recognise. **Redaction** rewrites text so "
+    "the sensitive values are removed -- either tagged by the kind of value or masked so even "
+    "its shape is hidden.\n\n"
     "## Notes\n\n"
-    "Scalars take an optional `language`; table functions accept named arguments "
-    "(`language :=`, `score_threshold :=`). Powered by "
+    "Per-row operations are scalars (usable inline in any projection or predicate) and take an "
+    "optional trailing `language`; the per-occurrence and discovery operations are table "
+    "functions that accept named arguments (`language :=`, `score_threshold :=`). Browse the "
+    "schema listing for exact names, signatures, and runnable examples. Powered by "
     "[Microsoft Presidio](https://microsoft.github.io/presidio/)."
 )
 
@@ -181,6 +182,112 @@ _MAIN_KEYWORDS = [
     "sensitive data",
 ]
 
+# Category navigation registry for the `main` schema (VGI413). Ordered JSON
+# array of {"name","description"}; every function carries a matching
+# `vgi.category` (set in vgi_pii.scalars / vgi_pii.tables).
+_MAIN_CATEGORIES = [
+    {
+        "name": "detection",
+        "description": (
+            "Inspect text for PII without changing it: test for presence, list the distinct "
+            "entity types, or enumerate every occurrence with its offsets and confidence."
+        ),
+    },
+    {
+        "name": "redaction",
+        "description": (
+            "Rewrite text to remove PII by replacing each detected entity with a type tag or masking its characters."
+        ),
+    },
+    {
+        "name": "discovery",
+        "description": "Introspect which PII entity types the analyzer is able to detect.",
+    },
+]
+
+# Grader suite for `vgi-lint simulate` / VGI152 & VGI920. Each task's
+# reference_sql and the analyst's answer run against the *same* live worker, so a
+# task passes when the analyst discovers and calls the right function -- not on
+# any absolute Presidio output. success_criteria is an LLM-judge fallback;
+# ignore_column_names avoids penalising harmless output-column naming, and
+# unordered relaxes row order where the prompt doesn't fix it.
+_AGENT_TEST_TASKS = [
+    {
+        "name": "detect-pii-presence",
+        "prompt": (
+            "Does the text 'Contact Jane Doe at jane@example.com' contain any "
+            "personally-identifiable information? Return a single boolean value."
+        ),
+        "reference_sql": "SELECT pii.has_pii('Contact Jane Doe at jane@example.com')",
+        "success_criteria": (
+            "Returns a single boolean value that is true, obtained by calling the worker's "
+            "PII-presence predicate on the given text."
+        ),
+        "ignore_column_names": True,
+    },
+    {
+        "name": "list-pii-types",
+        "prompt": ("List the distinct PII entity types present in the text 'Contact Jane Doe at jane@example.com'."),
+        "reference_sql": "SELECT pii.pii_types('Contact Jane Doe at jane@example.com')",
+        "success_criteria": (
+            "Returns the sorted array of distinct PII entity types (such as EMAIL_ADDRESS and "
+            "PERSON) present in the text."
+        ),
+        "ignore_column_names": True,
+    },
+    {
+        "name": "redact-with-type-tags",
+        "prompt": (
+            "Produce a copy of the text 'Email jane@example.com now' in which every PII value "
+            "is replaced by a tag naming its entity type (for example <EMAIL_ADDRESS>)."
+        ),
+        "reference_sql": "SELECT pii.redact('Email jane@example.com now')",
+        "success_criteria": (
+            "Returns the input text with each detected PII entity replaced by a <TYPE> tag naming its entity type."
+        ),
+        "ignore_column_names": True,
+    },
+    {
+        "name": "mask-pii-characters",
+        "prompt": (
+            "Produce a copy of the text 'Email jane@example.com now' in which every PII value's "
+            "characters are masked with asterisks."
+        ),
+        "reference_sql": "SELECT pii.anonymize('Email jane@example.com now')",
+        "success_criteria": (
+            "Returns the input text with each detected PII entity's characters overwritten by '*' asterisks."
+        ),
+        "ignore_column_names": True,
+    },
+    {
+        "name": "per-entity-detail",
+        "prompt": (
+            "For the text 'Contact Jane Doe at jane@example.com', return one row per detected "
+            "PII entity showing the entity type and the matched substring."
+        ),
+        "reference_sql": (
+            "SELECT entity_type, text FROM "
+            "pii.detect_pii('Contact Jane Doe at jane@example.com') ORDER BY entity_type, text"
+        ),
+        "success_criteria": (
+            "Returns one row per detected PII entity, each showing the entity type and the "
+            "matched substring from the input text."
+        ),
+        "unordered": True,
+        "ignore_column_names": True,
+    },
+    {
+        "name": "count-supported-entity-types",
+        "prompt": "How many distinct PII entity types can this worker's analyzer detect?",
+        "reference_sql": "SELECT count(*) FROM pii.supported_entities()",
+        "success_criteria": (
+            "Returns the number of distinct PII entity types the analyzer supports, obtained "
+            "from the worker's supported-entities discovery function."
+        ),
+        "ignore_column_names": True,
+    },
+]
+
 _CATALOG_TAGS = {
     "vgi.title": "PII Detection & Redaction",
     "vgi.keywords": json.dumps(_CATALOG_KEYWORDS),
@@ -191,6 +298,7 @@ _CATALOG_TAGS = {
     "vgi.license": "MIT",
     "vgi.support_contact": "https://github.com/Query-farm/vgi-pii/issues",
     "vgi.support_policy_url": "https://github.com/Query-farm/vgi-pii/blob/main/README.md",
+    "vgi.agent_test_tasks": json.dumps(_AGENT_TEST_TASKS),
 }
 
 _PII_CATALOG = Catalog(
@@ -209,6 +317,7 @@ _PII_CATALOG = Catalog(
                 "vgi.doc_llm": _MAIN_DESCRIPTION_LLM,
                 "vgi.doc_md": _MAIN_DESCRIPTION_MD,
                 "vgi.example_queries": _MAIN_EXAMPLE_QUERIES,
+                "vgi.categories": json.dumps(_MAIN_CATEGORIES),
                 # VGI123 classifying tags — BARE keys (not vgi.-namespaced).
                 "domain": "security",
                 "category": "parsing",

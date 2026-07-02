@@ -118,10 +118,19 @@ def warm_up() -> None:
     issued. It only populates the existing caches -- it never changes an output.
     Best-effort: a missing model is not fatal here (the relevant function will
     raise its own actionable error if actually invoked).
+
+    Beyond building the engines, it runs one throwaway analyze+anonymize on a
+    sample string. Presidio loads its recognizer registry and spaCy inference
+    graph lazily on the *first* ``analyze`` call (several seconds), not when the
+    engine object is constructed; exercising that path once here keeps the first
+    real query fast instead of paying ~10-20 s inline.
     """
     try:
         analyzer()
         anonymizer()
+        # Trigger the lazy recognizer/NLP-inference path once so the first real
+        # query is warm. Output is discarded; failures are non-fatal.
+        _anonymize("Warm up john@example.com", "en", DEFAULT_SCORE_THRESHOLD, operators=None)
     except Exception:  # pragma: no cover - best-effort warmup
         pass
 

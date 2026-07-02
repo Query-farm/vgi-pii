@@ -11,3 +11,4 @@ models/
 .cache/
 *.coverage
 .coverage
+.vgi-*-cache.json

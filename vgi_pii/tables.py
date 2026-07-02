@@ -169,6 +169,7 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                     "audit",
                     "privacy",
                 ],
+                category="detection",
             ),
             "vgi.result_columns_md": (
                 "| column | type | description |\n"
@@ -284,6 +285,7 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
                     "email",
                     "privacy",
                 ],
+                category="discovery",
             ),
             "vgi.result_columns_md": (
                 "| column | type | description |\n"

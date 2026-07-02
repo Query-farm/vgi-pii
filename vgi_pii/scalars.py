@@ -82,6 +82,7 @@ _HAS_PII_TAGS = object_tags(
         "predicate",
         "boolean",
     ],
+    category="detection",
 )
 
 _REDACT_TAGS = object_tags(
@@ -128,6 +129,7 @@ _REDACT_TAGS = object_tags(
         "privacy",
         "sanitize",
     ],
+    category="redaction",
 )
 
 _ANONYMIZE_TAGS = object_tags(
@@ -174,6 +176,7 @@ _ANONYMIZE_TAGS = object_tags(
         "sanitize",
         "redact",
     ],
+    category="redaction",
 )
 
 _PII_TYPES_TAGS = object_tags(
@@ -218,6 +221,7 @@ _PII_TYPES_TAGS = object_tags(
         "privacy",
         "summary",
     ],
+    category="detection",
 )
 
 
