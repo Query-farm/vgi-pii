@@ -44,9 +44,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      - name: Download spaCy model
-        run: uv run python -m spacy download en_core_web_sm
-
+      # No `spacy download` step: the en_core_web_sm model is installed as a
+      # pinned wheel via pyproject `[tool.uv.sources]` (the `dev`/`en-core-web-sm`
+      # extra pulled in by `--all-extras`). `python -m spacy download` shells out
+      # to pip, which the uv-managed venv does not contain.
       - name: Run tests
         run: uv run pytest -q
 
@@ -95,9 +96,9 @@ jobs:
       - name: Install the worker (from the lockfile)
         run: uv sync --frozen --python 3.13 --extra http
 
-      - name: Download spaCy model
-        run: uv run python -m spacy download en_core_web_sm
-
+      # No `spacy download`: `uv run pii_worker.py` is a PEP 723 script whose
+      # inline deps + `[tool.uv.sources]` pin the en_core_web_sm model wheel, so
+      # the worker resolves it on launch. (`spacy download` needs pip, absent here.)
       - name: vgi-lint
         uses: Query-farm/vgi-lint-check@v1
         with:
@@ -148,9 +149,9 @@ jobs:
       - name: Install the worker (from the lockfile)
         run: uv sync --frozen --python 3.13 --extra http
 
-      - name: Download spaCy model
-        run: uv run python -m spacy download en_core_web_sm
-
+      # No `spacy download`: `uv run pii_worker.py` is a PEP 723 script whose
+      # inline deps + `[tool.uv.sources]` pin the en_core_web_sm model wheel, so
+      # the worker resolves it on launch. (`spacy download` needs pip, absent here.)
       - name: Download haybarn-unittest
         run: |
           gh release download "$HAYBARN_RELEASE" \
