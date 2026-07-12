@@ -61,15 +61,16 @@ _HAS_PII_TAGS = object_tags(
     ),
     doc_md=(
         "# has_pii\n\n"
-        "A scalar predicate that answers a single question: *does this text contain PII?*\n\n"
-        "## Usage\n\n"
-        "```sql\n"
-        "SELECT pii.has_pii('Call John Smith at john@example.com');  -- true\n"
-        "SELECT id FROM messages WHERE pii.has_pii(body);            -- rows needing scrubbing\n"
-        "```\n\n"
-        "## Notes\n\n"
-        "Pass an explicit language as the second argument (`has_pii(text, 'en')`) to scan "
-        "non-English text. NULL or blank input yields NULL rather than `false`."
+        "A scalar predicate that answers a single question: *does this text contain PII?* "
+        "Call it inline in a projection to tag rows, or in a `WHERE` clause to keep only "
+        "the rows that need privacy handling before they are shared, exported, or archived.\n\n"
+        "## Behaviour\n\n"
+        "- Returns `true` as soon as any entity (a person name, email, phone number, credit "
+        "card, US SSN, location, URL, IP address, ...) is detected, otherwise `false`.\n"
+        "- Pass an explicit ISO language as the optional second argument "
+        "(`has_pii(text, 'en')`) to scan non-English text.\n"
+        "- `NULL`, empty, or whitespace-only input yields `NULL` rather than `false`.\n\n"
+        "See this function's example queries for a runnable demonstration."
     ),
     keywords=[
         "pii",
@@ -109,7 +110,7 @@ _REDACT_TAGS = object_tags(
         "surrounding text intact.\n\n"
         "## Usage\n\n"
         "```sql\n"
-        "SELECT pii.redact('Call John Smith at john@example.com');\n"
+        "SELECT pii.main.redact('Call John Smith at john@example.com');\n"
         "-- 'Call <PERSON> at <EMAIL_ADDRESS>'\n"
         "```\n\n"
         "## Notes\n\n"
@@ -156,7 +157,7 @@ _ANONYMIZE_TAGS = object_tags(
         "the rest of the text readable.\n\n"
         "## Usage\n\n"
         "```sql\n"
-        "SELECT pii.anonymize('Call John Smith at john@example.com');\n"
+        "SELECT pii.main.anonymize('Call John Smith at john@example.com');\n"
         "-- 'Call **** at ****************'\n"
         "```\n\n"
         "## Notes\n\n"
@@ -202,7 +203,7 @@ _PII_TYPES_TAGS = object_tags(
         "`VARCHAR[]`.\n\n"
         "## Usage\n\n"
         "```sql\n"
-        "SELECT pii.pii_types('Call John Smith at john@example.com');\n"
+        "SELECT pii.main.pii_types('Call John Smith at john@example.com');\n"
         "-- ['EMAIL_ADDRESS', 'PERSON']\n"
         "```\n\n"
         "## Notes\n\n"
@@ -263,7 +264,7 @@ class HasPiiFunction(ScalarFunction):
         tags = _HAS_PII_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.has_pii('Call John Smith at john@example.com')",
+                sql="SELECT pii.main.has_pii('Call John Smith at john@example.com')",
                 description="Detect whether text contains PII",
             ),
         ]
@@ -288,7 +289,7 @@ class HasPiiLanguageFunction(ScalarFunction):
         tags = _HAS_PII_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.has_pii('Call John Smith at john@example.com', 'en')",
+                sql="SELECT pii.main.has_pii('Call John Smith at john@example.com', 'en')",
                 description="Detect PII with an explicit language",
             ),
         ]
@@ -320,7 +321,7 @@ class RedactFunction(ScalarFunction):
         tags = _REDACT_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.redact('Call John Smith at john@example.com')",
+                sql="SELECT pii.main.redact('Call John Smith at john@example.com')",
                 description="Tag-redact PII (-> 'Call <PERSON> at <EMAIL_ADDRESS>')",
             ),
         ]
@@ -345,7 +346,7 @@ class RedactLanguageFunction(ScalarFunction):
         tags = _REDACT_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.redact('Call John Smith at john@example.com', 'en')",
+                sql="SELECT pii.main.redact('Call John Smith at john@example.com', 'en')",
                 description="Tag-redact PII with an explicit language",
             ),
         ]
@@ -377,7 +378,7 @@ class AnonymizeFunction(ScalarFunction):
         tags = _ANONYMIZE_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.anonymize('Call John Smith at john@example.com')",
+                sql="SELECT pii.main.anonymize('Call John Smith at john@example.com')",
                 description="Mask PII (-> 'Call **** at ****************')",
             ),
         ]
@@ -402,7 +403,7 @@ class AnonymizeLanguageFunction(ScalarFunction):
         tags = _ANONYMIZE_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.anonymize('Call John Smith at john@example.com', 'en')",
+                sql="SELECT pii.main.anonymize('Call John Smith at john@example.com', 'en')",
                 description="Mask PII with an explicit language",
             ),
         ]
@@ -434,7 +435,7 @@ class PiiTypesFunction(ScalarFunction):
         tags = _PII_TYPES_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.pii_types('Call John Smith at john@example.com')",
+                sql="SELECT pii.main.pii_types('Call John Smith at john@example.com')",
                 description="The distinct PII types in text (-> ['EMAIL_ADDRESS', 'PERSON'])",
             ),
         ]
@@ -459,7 +460,7 @@ class PiiTypesLanguageFunction(ScalarFunction):
         tags = _PII_TYPES_TAGS
         examples = [
             FunctionExample(
-                sql="SELECT pii.pii_types('Call John Smith at john@example.com', 'en')",
+                sql="SELECT pii.main.pii_types('Call John Smith at john@example.com', 'en')",
                 description="The distinct PII types in text, explicit language",
             ),
         ]

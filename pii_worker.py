@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.9.0",
+#     "vgi-python[http]>=0.14.0,<0.15.0",
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
@@ -25,12 +25,12 @@ Usage:
     INSTALL vgi FROM community; LOAD vgi;
     ATTACH 'pii' (TYPE vgi, LOCATION 'uv run pii_worker.py');
 
-    SELECT pii.has_pii('Call John Smith at john@example.com');        -- true
-    SELECT pii.redact('Call John Smith at john@example.com');         -- 'Call <PERSON> at <EMAIL_ADDRESS>'
-    SELECT pii.anonymize('Call John Smith at john@example.com');      -- 'Call **** at ****************'
-    SELECT pii.pii_types('Call John Smith at john@example.com');      -- ['EMAIL_ADDRESS', 'PERSON']
-    SELECT * FROM pii.detect_pii('Call John Smith at john@example.com');
-    SELECT * FROM pii.supported_entities() ORDER BY entity_type;
+    SELECT pii.main.has_pii('Call John Smith at john@example.com');        -- true
+    SELECT pii.main.redact('Call John Smith at john@example.com');         -- 'Call <PERSON> at <EMAIL_ADDRESS>'
+    SELECT pii.main.anonymize('Call John Smith at john@example.com');      -- 'Call **** at ****************'
+    SELECT pii.main.pii_types('Call John Smith at john@example.com');      -- ['EMAIL_ADDRESS', 'PERSON']
+    SELECT * FROM pii.main.detect_pii('Call John Smith at john@example.com');
+    SELECT * FROM pii.main.supported_entities() ORDER BY entity_type;
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from vgi.catalog import Catalog, Schema
 
 from vgi_pii import engine
 from vgi_pii.scalars import SCALAR_FUNCTIONS
-from vgi_pii.tables import TABLE_FUNCTIONS
+from vgi_pii.tables import DISCOVERY_TABLES, TABLE_FUNCTIONS
 
 _CATALOG_DESCRIPTION_LLM = (
     "Detect and redact personally-identifiable information (PII) in free text directly in SQL, "
@@ -86,7 +86,7 @@ _CATALOG_DESCRIPTION_MD = (
     "redaction powers safe sharing, export, and archival. Every operation accepts an optional "
     "ISO language argument (defaulting to English) and treats NULL or blank input gracefully.\n\n"
     "```sql\n"
-    "SELECT pii.redact('Call John Smith at john@example.com');\n"
+    "SELECT pii.main.redact('Call John Smith at john@example.com');\n"
     "-- 'Call <PERSON> at <EMAIL_ADDRESS>'\n"
     "```\n\n"
     "Learn more from the [Presidio documentation](https://microsoft.github.io/presidio/), the "
@@ -218,7 +218,7 @@ _AGENT_TEST_TASKS = [
             "Does the text 'Contact Jane Doe at jane@example.com' contain any "
             "personally-identifiable information? Return a single boolean value."
         ),
-        "reference_sql": "SELECT pii.has_pii('Contact Jane Doe at jane@example.com')",
+        "reference_sql": "SELECT pii.main.has_pii('Contact Jane Doe at jane@example.com')",
         "success_criteria": (
             "Returns a single boolean value that is true, obtained by calling the worker's "
             "PII-presence predicate on the given text."
@@ -228,7 +228,7 @@ _AGENT_TEST_TASKS = [
     {
         "name": "list-pii-types",
         "prompt": ("List the distinct PII entity types present in the text 'Contact Jane Doe at jane@example.com'."),
-        "reference_sql": "SELECT pii.pii_types('Contact Jane Doe at jane@example.com')",
+        "reference_sql": "SELECT pii.main.pii_types('Contact Jane Doe at jane@example.com')",
         "success_criteria": (
             "Returns the sorted array of distinct PII entity types (such as EMAIL_ADDRESS and "
             "PERSON) present in the text."
@@ -241,7 +241,7 @@ _AGENT_TEST_TASKS = [
             "Produce a copy of the text 'Email jane@example.com now' in which every PII value "
             "is replaced by a tag naming its entity type (for example <EMAIL_ADDRESS>)."
         ),
-        "reference_sql": "SELECT pii.redact('Email jane@example.com now')",
+        "reference_sql": "SELECT pii.main.redact('Email jane@example.com now')",
         "success_criteria": (
             "Returns the input text with each detected PII entity replaced by a <TYPE> tag naming its entity type."
         ),
@@ -253,7 +253,7 @@ _AGENT_TEST_TASKS = [
             "Produce a copy of the text 'Email jane@example.com now' in which every PII value's "
             "characters are masked with asterisks."
         ),
-        "reference_sql": "SELECT pii.anonymize('Email jane@example.com now')",
+        "reference_sql": "SELECT pii.main.anonymize('Email jane@example.com now')",
         "success_criteria": (
             "Returns the input text with each detected PII entity's characters overwritten by '*' asterisks."
         ),
@@ -267,7 +267,7 @@ _AGENT_TEST_TASKS = [
         ),
         "reference_sql": (
             "SELECT entity_type, text FROM "
-            "pii.detect_pii('Contact Jane Doe at jane@example.com') ORDER BY entity_type, text"
+            "pii.main.detect_pii('Contact Jane Doe at jane@example.com') ORDER BY entity_type, text"
         ),
         "success_criteria": (
             "Returns one row per detected PII entity, each showing the entity type and the "
@@ -279,10 +279,23 @@ _AGENT_TEST_TASKS = [
     {
         "name": "count-supported-entity-types",
         "prompt": "How many distinct PII entity types can this worker's analyzer detect?",
-        "reference_sql": "SELECT count(*) FROM pii.supported_entities()",
+        "reference_sql": "SELECT count(*) FROM pii.main.supported_entities()",
         "success_criteria": (
             "Returns the number of distinct PII entity types the analyzer supports, obtained "
             "from the worker's supported-entities discovery function."
+        ),
+        "ignore_column_names": True,
+    },
+    {
+        "name": "recognizes-credit-card",
+        "prompt": (
+            "Does this worker's list of recognizable PII entity types include credit-card "
+            "numbers (the CREDIT_CARD type)? Return a single boolean value."
+        ),
+        "reference_sql": ("SELECT count(*) > 0 FROM pii.main.entity_types WHERE entity_type = 'CREDIT_CARD'"),
+        "success_criteria": (
+            "Returns a single boolean that is true, determined by looking up CREDIT_CARD in the "
+            "worker's browsable table of recognizable entity types."
         ),
         "ignore_column_names": True,
     },
@@ -324,6 +337,7 @@ _PII_CATALOG = Catalog(
                 "topic": "pii-detection-and-redaction",
             },
             functions=[*SCALAR_FUNCTIONS, *TABLE_FUNCTIONS],
+            tables=list(DISCOVERY_TABLES),
         ),
     ],
 )

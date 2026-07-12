@@ -6,9 +6,9 @@ form that accepts DuckDB ``name := value`` arguments (``language``,
 ``redact``, ``anonymize``, ``pii_types``) are *scalars* and live in
 :mod:`vgi_pii.scalars`.
 
-    SELECT * FROM pii.detect_pii('Call John Smith at john@example.com');
-    SELECT * FROM pii.detect_pii('...', language := 'en', score_threshold := 0.8);
-    SELECT * FROM pii.supported_entities() ORDER BY entity_type;
+    SELECT * FROM pii.main.detect_pii('Call John Smith at john@example.com');
+    SELECT * FROM pii.main.detect_pii('...', language := 'en', score_threshold := 0.8);
+    SELECT * FROM pii.main.supported_entities() ORDER BY entity_type;
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from typing import Annotated, ClassVar
 
 import pyarrow as pa
 from vgi.arguments import Arg
+from vgi.catalog import Table
 from vgi.metadata import FunctionExample
 from vgi.table_function import (
     BindParams,
@@ -31,7 +32,7 @@ from vgi.table_function import (
 from vgi_rpc.rpc import OutputCollector
 
 from . import engine
-from .meta import object_tags
+from .meta import keywords_json, object_tags
 from .schema_utils import field
 
 _LANGUAGE = Arg[str]("language", default="en", doc="ISO language code (e.g. 'en').")
@@ -50,31 +51,31 @@ _EXECUTABLE_EXAMPLES = json.dumps(
     [
         {
             "description": "Detect whether text contains any PII.",
-            "sql": "SELECT pii.has_pii('Call John Smith at john@example.com') AS has_pii",
+            "sql": "SELECT pii.main.has_pii('Call John Smith at john@example.com') AS has_pii",
         },
         {
             "description": "Tag-redact each PII entity with its <TYPE> label.",
-            "sql": "SELECT pii.redact('Call John Smith at john@example.com') AS redacted",
+            "sql": "SELECT pii.main.redact('Call John Smith at john@example.com') AS redacted",
         },
         {
             "description": "Mask each PII entity's characters with '*'.",
-            "sql": "SELECT pii.anonymize('Call John Smith at john@example.com') AS masked",
+            "sql": "SELECT pii.main.anonymize('Call John Smith at john@example.com') AS masked",
         },
         {
             "description": "List the distinct PII entity types present in text.",
-            "sql": "SELECT pii.pii_types('Call John Smith at john@example.com') AS types",
+            "sql": "SELECT pii.main.pii_types('Call John Smith at john@example.com') AS types",
         },
         {
             "description": "Expand text into one row per detected PII entity.",
             "sql": (
                 "SELECT entity_type, text, start, end_pos "
-                "FROM pii.detect_pii('Call John Smith at john@example.com') "
+                "FROM pii.main.detect_pii('Call John Smith at john@example.com') "
                 "ORDER BY start"
             ),
         },
         {
             "description": "Count how many PII entity types the analyzer supports.",
-            "sql": "SELECT count(*) AS n FROM pii.supported_entities()",
+            "sql": "SELECT count(*) AS n FROM pii.main.supported_entities()",
         },
     ]
 )
@@ -144,16 +145,19 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                     "# detect_pii\n\n"
                     "Expand text into one row per detected PII entity, with offsets and "
                     "confidence.\n\n"
-                    "## Usage\n\n"
-                    "```sql\n"
-                    "SELECT * FROM pii.detect_pii('Call John Smith at john@example.com');\n"
-                    "SELECT entity_type, text\n"
-                    "FROM pii.detect_pii('Email john@example.com', score_threshold := 0.8);\n"
-                    "```\n\n"
+                    "## Signature\n\n"
+                    "`detect_pii(text[, language := 'en'][, score_threshold := 0.5])` — the "
+                    "single positional `text` argument is required; `language` and "
+                    "`score_threshold` are optional named arguments.\n\n"
+                    "## Result columns\n\n"
+                    "Each row is `(entity_type, text, start, end_pos, score)`: the entity type, "
+                    "the matched substring, its inclusive start and exclusive end character "
+                    "offsets, and the detection confidence in `[0, 1]`.\n\n"
                     "## Notes\n\n"
                     "`end_pos` is the exclusive end offset (the column is named `end_pos` because "
-                    "`end` is a SQL keyword). NULL/blank text returns no rows. Use the optional "
-                    "`language` and `score_threshold` named arguments to tune detection."
+                    "`end` is a SQL keyword). NULL/blank text returns no rows. Raise "
+                    "`score_threshold` to keep only high-confidence detections. See this "
+                    "function's example queries for runnable demonstrations."
                 ),
                 keywords=[
                     "pii",
@@ -171,24 +175,51 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                 ],
                 category="detection",
             ),
-            "vgi.result_columns_md": (
-                "| column | type | description |\n"
-                "|---|---|---|\n"
-                "| `entity_type` | VARCHAR | Detected PII entity type, e.g. `PERSON`, `EMAIL_ADDRESS`. |\n"
-                "| `text` | VARCHAR | The matched substring from the input. |\n"
-                "| `start` | INTEGER | Start character offset (inclusive). |\n"
-                "| `end_pos` | INTEGER | End character offset (exclusive). |\n"
-                "| `score` | DOUBLE | Detection confidence in `[0, 1]`. |"
+            "vgi.result_columns_schema": json.dumps(
+                [
+                    {
+                        "name": "entity_type",
+                        "type": "VARCHAR",
+                        "description": "Detected PII entity type, e.g. PERSON, EMAIL_ADDRESS.",
+                    },
+                    {
+                        "name": "text",
+                        "type": "VARCHAR",
+                        "description": "The matched substring from the input text.",
+                    },
+                    {
+                        "name": "start",
+                        "type": "INTEGER",
+                        "description": "Start character offset of the match (inclusive).",
+                    },
+                    {
+                        "name": "end_pos",
+                        "type": "INTEGER",
+                        "description": "End character offset of the match (exclusive).",
+                    },
+                    {
+                        "name": "score",
+                        "type": "DOUBLE",
+                        "description": "Detection confidence in the range [0, 1].",
+                    },
+                ]
             ),
             "vgi.executable_examples": _EXECUTABLE_EXAMPLES,
         }
         examples = [
             FunctionExample(
-                sql="SELECT * FROM pii.detect_pii('Call John Smith at john@example.com')",
-                description="List every PII entity found in the text",
+                sql=(
+                    "SELECT entity_type, text, start, end_pos, score "
+                    "FROM pii.main.detect_pii('Call John Smith at john@example.com') "
+                    "ORDER BY start"
+                ),
+                description="List every PII entity found in the text, ordered by position",
             ),
             FunctionExample(
-                sql=("SELECT entity_type, text FROM pii.detect_pii('Email john@example.com', score_threshold := 0.8)"),
+                sql=(
+                    "SELECT entity_type, text FROM "
+                    "pii.main.detect_pii('Email john@example.com', score_threshold := 0.8)"
+                ),
                 description="Only high-confidence detections",
             ),
         ]
@@ -263,15 +294,15 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
                 doc_md=(
                     "# supported_entities\n\n"
                     "List every PII entity type the analyzer can detect, one per row.\n\n"
-                    "## Usage\n\n"
-                    "```sql\n"
-                    "SELECT * FROM pii.supported_entities() ORDER BY entity_type;\n"
-                    "SELECT count(*) FROM pii.supported_entities();\n"
-                    "```\n\n"
+                    "## Signature\n\n"
+                    "`supported_entities([language := 'en'])` — takes only the optional named "
+                    "`language` argument and returns a single `entity_type` column.\n\n"
                     "## Notes\n\n"
                     "Pass `language := '...'` to inspect the recognizers configured for another "
-                    "language. The returned names are exactly the values `detect_pii.entity_type` "
-                    "and `pii_types` can produce."
+                    "language. The returned names are exactly the values that "
+                    "`detect_pii.entity_type` and `pii_types` can produce -- use this table to "
+                    "validate a filter or build a picker. See this function's example queries for "
+                    "runnable demonstrations."
                 ),
                 keywords=[
                     "pii",
@@ -287,19 +318,26 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
                 ],
                 category="discovery",
             ),
-            "vgi.result_columns_md": (
-                "| column | type | description |\n"
-                "|---|---|---|\n"
-                "| `entity_type` | VARCHAR | An entity type the analyzer can detect, e.g. `PERSON`. |"
+            "vgi.result_columns_schema": json.dumps(
+                [
+                    {
+                        "name": "entity_type",
+                        "type": "VARCHAR",
+                        "description": "An entity type the analyzer can detect, e.g. PERSON.",
+                    },
+                ]
             ),
         }
         examples = [
             FunctionExample(
-                sql="SELECT * FROM pii.supported_entities() ORDER BY entity_type",
-                description="List every detectable PII entity type",
+                sql=(
+                    "SELECT entity_type FROM pii.main.supported_entities() "
+                    "WHERE entity_type LIKE '%CARD%' ORDER BY entity_type"
+                ),
+                description="Which detectable entity types relate to payment cards",
             ),
             FunctionExample(
-                sql="SELECT count(*) FROM pii.supported_entities()",
+                sql="SELECT count(*) FROM pii.main.supported_entities()",
                 description="How many entity types are supported",
             ),
         ]
@@ -320,4 +358,98 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
 TABLE_FUNCTIONS: list[type] = [
     DetectPiiFunction,
     SupportedEntitiesFunction,
+]
+
+
+# ===========================================================================
+# entity_types -- a browsable discovery *table* (VGI146)
+# ===========================================================================
+#
+# A worker that exposes only table functions forces an agent to guess arguments
+# before it can see any data. Exposing the analyzer's recognizable entity types
+# as a plain, argument-free *table* (backed by the existing
+# ``SupportedEntitiesFunction`` generator, scanned with its default language) lets
+# an agent browse the worker's vocabulary with a bare ``SELECT ... FROM`` -- no
+# arguments to guess, no credentials, no network. Mirrors the discovery-table
+# idiom used by the sibling ``vgi-conform`` worker.
+
+_ENTITY_TYPES_DOC_LLM = (
+    "## entity_types\n\n"
+    "A browsable discovery **table** listing every PII entity type this worker's analyzer "
+    "can recognise (for the default English configuration), one type per row. Read it with a "
+    "plain `SELECT` -- no arguments required -- to learn the exact vocabulary that "
+    "`detect_pii.entity_type` and `pii_types` can produce, e.g. to validate a filter, build a "
+    "picker, or document coverage.\n\n"
+    "- **Columns:** a single `entity_type` `VARCHAR` (e.g. `PERSON`, `EMAIL_ADDRESS`, "
+    "`PHONE_NUMBER`, `CREDIT_CARD`, `US_SSN`, `LOCATION`, `URL`, `IP_ADDRESS`).\n"
+    "- **Rows:** one per recognisable entity type; `entity_type` is the table's primary key.\n\n"
+    "For the recognizers of a *non-default* language, call the `supported_entities(language := ...)` "
+    "table function instead. Backed by Microsoft Presidio's registered recognizers."
+)
+
+_ENTITY_TYPES_DOC_MD = (
+    "# entity_types\n\n"
+    "A browsable table of every PII entity type the analyzer can recognise for the default "
+    "English configuration, one per row.\n\n"
+    "## Columns\n\n"
+    "- `entity_type` (`VARCHAR`, primary key) -- a recognizable entity type such as `PERSON`, "
+    "`EMAIL_ADDRESS`, or `CREDIT_CARD`.\n\n"
+    "## Notes\n\n"
+    "These are exactly the values `detect_pii` and `pii_types` can return. This table uses the "
+    "default (English) recognizer set; for another language use the "
+    "`supported_entities(language := ...)` table function. See this table's example queries for "
+    "runnable demonstrations."
+)
+
+ENTITY_TYPES_TABLE = Table(
+    name="entity_types",
+    function=SupportedEntitiesFunction,
+    comment="Every PII entity type the analyzer can recognise (default English), one per row.",
+    primary_key=(("entity_type",),),
+    not_null=("entity_type",),
+    column_comments={
+        "entity_type": "A PII entity type the analyzer can detect, e.g. PERSON, EMAIL_ADDRESS.",
+    },
+    tags={
+        "vgi.title": "Recognizable PII Entity Types",
+        "vgi.doc_llm": _ENTITY_TYPES_DOC_LLM,
+        "vgi.doc_md": _ENTITY_TYPES_DOC_MD,
+        "vgi.keywords": keywords_json(
+            [
+                "pii",
+                "entity types",
+                "entity_types",
+                "recognizers",
+                "discovery",
+                "vocabulary",
+                "catalog",
+                "coverage",
+                "person",
+                "email",
+                "credit card",
+            ]
+        ),
+        "vgi.category": "discovery",
+        "domain": "security",
+        "vgi.example_queries": json.dumps(
+            [
+                {
+                    "description": "Count how many PII entity types the analyzer recognises.",
+                    "sql": "SELECT count(*) AS n FROM pii.main.entity_types",
+                },
+                {
+                    "description": "Check whether the analyzer recognises credit-card numbers.",
+                    "sql": (
+                        "SELECT count(*) > 0 AS detects_cards "
+                        "FROM pii.main.entity_types WHERE entity_type = 'CREDIT_CARD'"
+                    ),
+                },
+            ]
+        ),
+    },
+)
+
+
+DISCOVERY_TABLES: list[Table] = [
+    ENTITY_TYPES_TABLE,
 ]
