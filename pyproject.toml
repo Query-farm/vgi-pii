@@ -32,6 +32,12 @@ dependencies = [
 http = [
     "vgi-python[http]>=0.16.0",
 ]
+# HTTP-serving extra — installed by the published Docker image (`.[serve]`) so the
+# container can serve the worker over HTTP (/health + VGI RPC) via `vgi-serve --http`.
+# Alias of `http`; kept as its own name to match the fleet Docker convention.
+serve = [
+    "vgi-python[http]>=0.16.0",
+]
 dev = [
     "pytest>=8",
     "mypy>=1.10",
@@ -39,6 +45,11 @@ dev = [
     "pydoclint",
     "en-core-web-sm",
 ]
+
+[project.scripts]
+# Installed console script so DuckDB / vgi-serve can spawn the worker from an
+# installed wheel (stdio) and the Docker image can serve it over HTTP.
+vgi-pii-worker = "vgi_pii.worker:main"
 
 [project.urls]
 Homepage = "https://query.farm"
