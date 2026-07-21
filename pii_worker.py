@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "vgi-python[http]>=0.14.0,<0.15.0",
+#     "vgi-python[http]>=0.16.0",
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
@@ -111,7 +111,9 @@ _MAIN_DESCRIPTION_LLM = (
     "per-occurrence and discovery operations are table functions. Every operation takes an "
     "optional ISO language argument (defaulting to English). Detection is powered by Microsoft "
     "Presidio with a spaCy NLP model; NULL or blank input is handled gracefully (NULL or no "
-    "rows). List the schema to discover the exact function names, signatures, and examples."
+    "rows). Detection tags a broad set of entity types (PERSON, EMAIL_ADDRESS, PHONE_NUMBER, "
+    "CREDIT_CARD, US_SSN, LOCATION, URL, IP_ADDRESS, and more), each with a confidence score you "
+    "can raise via the `score_threshold` argument to trade recall for precision."
 )
 
 _MAIN_DESCRIPTION_MD = (
@@ -128,18 +130,45 @@ _MAIN_DESCRIPTION_MD = (
     "## Notes\n\n"
     "Per-row operations are scalars (usable inline in any projection or predicate) and take an "
     "optional trailing `language`; the per-occurrence and discovery operations are table "
-    "functions that accept named arguments (`language :=`, `score_threshold :=`). Browse the "
-    "schema listing for exact names, signatures, and runnable examples. Powered by "
+    "functions that accept named arguments (`language :=`, `score_threshold :=`). Raise "
+    "`score_threshold` on the table functions to keep only high-confidence detections, and pass "
+    "`language` to scan non-English text. Powered by "
     "[Microsoft Presidio](https://microsoft.github.io/presidio/)."
 )
 
-_MAIN_EXAMPLE_QUERIES = (
-    "SELECT pii.main.has_pii('Call John Smith at john@example.com');\n"
-    "SELECT pii.main.redact('Call John Smith at john@example.com');\n"
-    "SELECT pii.main.anonymize('Call John Smith at john@example.com');\n"
-    "SELECT pii.main.pii_types('Call John Smith at john@example.com');\n"
-    "SELECT * FROM pii.main.detect_pii('Call John Smith at john@example.com') ORDER BY start;\n"
-    "SELECT * FROM pii.main.supported_entities() ORDER BY entity_type;"
+# Schema-level examples must be a described JSON list (VGI515): each entry pairs
+# a human-readable description with a runnable, catalog-qualified query. Projected
+# columns (never bare SELECT *) keep them readable and VGI514-clean.
+_MAIN_EXAMPLE_QUERIES = json.dumps(
+    [
+        {
+            "description": "Flag whether text contains any PII (a boolean predicate for filtering).",
+            "sql": "SELECT pii.main.has_pii('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "Replace each PII entity with a <TYPE> tag naming its kind.",
+            "sql": "SELECT pii.main.redact('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "Mask each PII entity's characters with '*'.",
+            "sql": "SELECT pii.main.anonymize('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "List the distinct PII entity types present in text.",
+            "sql": "SELECT pii.main.pii_types('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "Enumerate every detected PII entity with its offsets and confidence.",
+            "sql": (
+                "SELECT entity_type, text, start, end_pos, score "
+                "FROM pii.main.detect_pii('Call John Smith at john@example.com') ORDER BY start"
+            ),
+        },
+        {
+            "description": "Discover which entity types the analyzer can detect.",
+            "sql": "SELECT entity_type FROM pii.main.supported_entities() ORDER BY entity_type",
+        },
+    ]
 )
 
 # vgi.keywords must be a JSON array of strings (VGI138), not a comma-separated

@@ -84,6 +84,16 @@ _HAS_PII_TAGS = object_tags(
         "boolean",
     ],
     category="detection",
+    examples=[
+        {
+            "description": "Detect whether text contains PII.",
+            "sql": "SELECT pii.main.has_pii('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "Detect PII with an explicit ISO language.",
+            "sql": "SELECT pii.main.has_pii('Call John Smith at john@example.com', 'en')",
+        },
+    ],
 )
 
 _REDACT_TAGS = object_tags(
@@ -131,6 +141,16 @@ _REDACT_TAGS = object_tags(
         "sanitize",
     ],
     category="redaction",
+    examples=[
+        {
+            "description": "Tag-redact each PII entity (-> 'Call <PERSON> at <EMAIL_ADDRESS>').",
+            "sql": "SELECT pii.main.redact('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "Tag-redact PII with an explicit ISO language.",
+            "sql": "SELECT pii.main.redact('Call John Smith at john@example.com', 'en')",
+        },
+    ],
 )
 
 _ANONYMIZE_TAGS = object_tags(
@@ -178,6 +198,16 @@ _ANONYMIZE_TAGS = object_tags(
         "redact",
     ],
     category="redaction",
+    examples=[
+        {
+            "description": "Mask each PII entity's characters (-> 'Call **** at ****************').",
+            "sql": "SELECT pii.main.anonymize('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "Mask PII with an explicit ISO language.",
+            "sql": "SELECT pii.main.anonymize('Call John Smith at john@example.com', 'en')",
+        },
+    ],
 )
 
 _PII_TYPES_TAGS = object_tags(
@@ -223,6 +253,16 @@ _PII_TYPES_TAGS = object_tags(
         "summary",
     ],
     category="detection",
+    examples=[
+        {
+            "description": "List the distinct PII types in text (-> ['EMAIL_ADDRESS', 'PERSON']).",
+            "sql": "SELECT pii.main.pii_types('Call John Smith at john@example.com')",
+        },
+        {
+            "description": "List the distinct PII types with an explicit ISO language.",
+            "sql": "SELECT pii.main.pii_types('Call John Smith at john@example.com', 'en')",
+        },
+    ],
 )
 
 

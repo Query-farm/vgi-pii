@@ -174,6 +174,23 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                     "privacy",
                 ],
                 category="detection",
+                examples=[
+                    {
+                        "description": "List every PII entity found in the text, ordered by position.",
+                        "sql": (
+                            "SELECT entity_type, text, start, end_pos, score "
+                            "FROM pii.main.detect_pii('Call John Smith at john@example.com') "
+                            "ORDER BY start"
+                        ),
+                    },
+                    {
+                        "description": "Keep only high-confidence detections via score_threshold.",
+                        "sql": (
+                            "SELECT entity_type, text FROM "
+                            "pii.main.detect_pii('Email john@example.com', score_threshold := 0.8)"
+                        ),
+                    },
+                ],
             ),
             "vgi.result_columns_schema": json.dumps(
                 [
@@ -317,6 +334,19 @@ class SupportedEntitiesFunction(TableFunctionGenerator[_SupportedEntitiesArgs]):
                     "privacy",
                 ],
                 category="discovery",
+                examples=[
+                    {
+                        "description": "Find which detectable entity types relate to payment cards.",
+                        "sql": (
+                            "SELECT entity_type FROM pii.main.supported_entities() "
+                            "WHERE entity_type LIKE '%CARD%' ORDER BY entity_type"
+                        ),
+                    },
+                    {
+                        "description": "Count how many entity types the analyzer supports.",
+                        "sql": "SELECT count(*) FROM pii.main.supported_entities()",
+                    },
+                ],
             ),
             "vgi.result_columns_schema": json.dumps(
                 [

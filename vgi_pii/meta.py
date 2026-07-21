@@ -25,7 +25,28 @@ source link belongs only on the catalog object.
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+
+
+def example_queries_json(examples: Sequence[Mapping[str, str]]) -> str:
+    """Serialize described example queries for the ``vgi.example_queries`` tag.
+
+    VGI515 requires every function- and schema-level example to carry a
+    non-empty human-readable description, and the native
+    ``duckdb_functions().examples`` carrier (populated from ``Meta.examples``)
+    drops descriptions. Emitting the same queries through ``vgi.example_queries``
+    as a JSON list of ``{"description", "sql"}`` objects preserves them; the
+    linter unions the two carriers deduped by SQL, keeping the described copy.
+
+    Args:
+        examples: Ordered ``{"description": ..., "sql": ...}`` mappings; for a
+            function with arity overloads, aggregate every overload's examples
+            here (they share one function name in the catalog).
+
+    Returns:
+        The examples encoded as a JSON array-of-objects literal.
+    """
+    return json.dumps([{"description": e["description"], "sql": e["sql"]} for e in examples])
 
 
 def keywords_json(keywords: Sequence[str]) -> str:
@@ -50,6 +71,7 @@ def object_tags(
     doc_md: str,
     keywords: Sequence[str],
     category: str,
+    examples: Sequence[Mapping[str, str]] | None = None,
 ) -> dict[str, str]:
     """Build the standard per-object discovery/description tags.
 
@@ -61,15 +83,22 @@ def object_tags(
             ``vgi.keywords`` (VGI138).
         category: The object's primary ``vgi.category`` -- the name of one entry
             in the schema's ``vgi.categories`` registry (VGI409/VGI411/VGI413).
+        examples: Optional described example queries; serialized to
+            ``vgi.example_queries`` (VGI515) so every example keeps its
+            description. Aggregate arity-overload examples under the one function
+            name.
 
     Returns:
         A dict of the tag keys to their values, ready to merge into a function's
         ``Meta.tags``.
     """
-    return {
+    tags = {
         "vgi.title": title,
         "vgi.doc_llm": doc_llm,
         "vgi.doc_md": doc_md,
         "vgi.keywords": keywords_json(keywords),
         "vgi.category": category,
     }
+    if examples is not None:
+        tags["vgi.example_queries"] = example_queries_json(examples)
+    return tags
