@@ -1,0 +1,33 @@
+# Private graders for `vgi-lint simulate` (VGI416). The worker publishes only
+# task names and prompts in vgi.agent_test_tasks; the canonical solutions and
+# grading options stay in this repo-root sidecar, which vgi-lint auto-discovers.
+tasks:
+  - name: detect-pii-presence
+    reference_sql: "SELECT pii.main.has_pii('Contact Jane Doe at jane@example.com')"
+    success_criteria: "Returns a single boolean value that is true, obtained by calling the worker's PII-presence predicate on the given text."
+    ignore_column_names: true
+  - name: list-pii-types
+    reference_sql: "SELECT pii.main.pii_types('Contact Jane Doe at jane@example.com')"
+    success_criteria: "Returns the sorted array of distinct PII entity types (such as EMAIL_ADDRESS and PERSON) present in the text."
+    ignore_column_names: true
+  - name: redact-with-type-tags
+    reference_sql: "SELECT pii.main.redact('Email jane@example.com now')"
+    success_criteria: "Returns the input text with each detected PII entity replaced by a <TYPE> tag naming its entity type."
+    ignore_column_names: true
+  - name: mask-pii-characters
+    reference_sql: "SELECT pii.main.anonymize('Email jane@example.com now')"
+    success_criteria: "Returns the input text with each detected PII entity's characters overwritten by '*' asterisks."
+    ignore_column_names: true
+  - name: per-entity-detail
+    reference_sql: "SELECT entity_type, text FROM pii.main.detect_pii('Contact Jane Doe at jane@example.com') ORDER BY entity_type, text"
+    success_criteria: "Returns one row per detected PII entity, each showing the entity type and the matched substring from the input text."
+    ignore_column_names: true
+    unordered: true
+  - name: count-supported-entity-types
+    reference_sql: "SELECT count(*) FROM pii.main.supported_entities()"
+    success_criteria: "Returns the number of distinct PII entity types the analyzer supports, obtained from the worker's supported-entities discovery function."
+    ignore_column_names: true
+  - name: recognizes-credit-card
+    reference_sql: "SELECT count(*) > 0 FROM pii.main.entity_types WHERE entity_type = 'CREDIT_CARD'"
+    success_criteria: "Returns a single boolean that is true, determined by looking up CREDIT_CARD in the worker's browsable table of recognizable entity types."
+    ignore_column_names: true

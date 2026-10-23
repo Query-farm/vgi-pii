@@ -230,12 +230,13 @@ _MAIN_CATEGORIES = [
     },
 ]
 
-# Grader suite for `vgi-lint simulate` / VGI152 & VGI920. Each task's
-# reference_sql and the analyst's answer run against the *same* live worker, so a
-# task passes when the analyst discovers and calls the right function -- not on
-# any absolute Presidio output. success_criteria is an LLM-judge fallback;
-# ignore_column_names avoids penalising harmless output-column naming, and
-# unordered relaxes row order where the prompt doesn't fix it.
+# Agent-suitability suite for `vgi-lint simulate` / VGI152 & VGI920. Each task
+# is a public {name, prompt} object. VGI416: the grader-only fields
+# (`reference_sql`, `success_criteria`, `ignore_column_names`, `unordered`) live
+# in the private `vgi-agent-tests.yaml` sidecar at the repo root, never in
+# metadata. The reference and the analyst's answer run against the *same* live
+# worker, so a task passes when the analyst calls the right function -- not on
+# any absolute Presidio output.
 _AGENT_TEST_TASKS = [
     {
         "name": "detect-pii-presence",
@@ -243,22 +244,10 @@ _AGENT_TEST_TASKS = [
             "Does the text 'Contact Jane Doe at jane@example.com' contain any "
             "personally-identifiable information? Return a single boolean value."
         ),
-        "reference_sql": "SELECT pii.main.has_pii('Contact Jane Doe at jane@example.com')",
-        "success_criteria": (
-            "Returns a single boolean value that is true, obtained by calling the worker's "
-            "PII-presence predicate on the given text."
-        ),
-        "ignore_column_names": True,
     },
     {
         "name": "list-pii-types",
         "prompt": ("List the distinct PII entity types present in the text 'Contact Jane Doe at jane@example.com'."),
-        "reference_sql": "SELECT pii.main.pii_types('Contact Jane Doe at jane@example.com')",
-        "success_criteria": (
-            "Returns the sorted array of distinct PII entity types (such as EMAIL_ADDRESS and "
-            "PERSON) present in the text."
-        ),
-        "ignore_column_names": True,
     },
     {
         "name": "redact-with-type-tags",
@@ -266,11 +255,6 @@ _AGENT_TEST_TASKS = [
             "Produce a copy of the text 'Email jane@example.com now' in which every PII value "
             "is replaced by a tag naming its entity type (for example <EMAIL_ADDRESS>)."
         ),
-        "reference_sql": "SELECT pii.main.redact('Email jane@example.com now')",
-        "success_criteria": (
-            "Returns the input text with each detected PII entity replaced by a <TYPE> tag naming its entity type."
-        ),
-        "ignore_column_names": True,
     },
     {
         "name": "mask-pii-characters",
@@ -278,11 +262,6 @@ _AGENT_TEST_TASKS = [
             "Produce a copy of the text 'Email jane@example.com now' in which every PII value's "
             "characters are masked with asterisks."
         ),
-        "reference_sql": "SELECT pii.main.anonymize('Email jane@example.com now')",
-        "success_criteria": (
-            "Returns the input text with each detected PII entity's characters overwritten by '*' asterisks."
-        ),
-        "ignore_column_names": True,
     },
     {
         "name": "per-entity-detail",
@@ -290,26 +269,10 @@ _AGENT_TEST_TASKS = [
             "For the text 'Contact Jane Doe at jane@example.com', return one row per detected "
             "PII entity showing the entity type and the matched substring."
         ),
-        "reference_sql": (
-            "SELECT entity_type, text FROM "
-            "pii.main.detect_pii('Contact Jane Doe at jane@example.com') ORDER BY entity_type, text"
-        ),
-        "success_criteria": (
-            "Returns one row per detected PII entity, each showing the entity type and the "
-            "matched substring from the input text."
-        ),
-        "unordered": True,
-        "ignore_column_names": True,
     },
     {
         "name": "count-supported-entity-types",
         "prompt": "How many distinct PII entity types can this worker's analyzer detect?",
-        "reference_sql": "SELECT count(*) FROM pii.main.supported_entities()",
-        "success_criteria": (
-            "Returns the number of distinct PII entity types the analyzer supports, obtained "
-            "from the worker's supported-entities discovery function."
-        ),
-        "ignore_column_names": True,
     },
     {
         "name": "recognizes-credit-card",
@@ -317,12 +280,6 @@ _AGENT_TEST_TASKS = [
             "Does this worker's list of recognizable PII entity types include credit-card "
             "numbers (the CREDIT_CARD type)? Return a single boolean value."
         ),
-        "reference_sql": ("SELECT count(*) > 0 FROM pii.main.entity_types WHERE entity_type = 'CREDIT_CARD'"),
-        "success_criteria": (
-            "Returns a single boolean that is true, determined by looking up CREDIT_CARD in the "
-            "worker's browsable table of recognizable entity types."
-        ),
-        "ignore_column_names": True,
     },
 ]
 
@@ -347,7 +304,7 @@ _PII_CATALOG = Catalog(
     tags=_CATALOG_TAGS,
     schemas=[
         Schema(
-            name="main",
+            path=["main"],
             comment="Detect, list, redact, and anonymize PII entities in free text",
             tags={
                 "vgi.title": "PII Functions — main",

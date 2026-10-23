@@ -29,7 +29,7 @@ for every scalar here. ``pii_types`` returns a ``VARCHAR[]`` (note the explicit
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Annotated
+from typing import Annotated, Any
 
 import pyarrow as pa
 from vgi.arguments import ConstParam, Param, Returns
@@ -282,7 +282,7 @@ def _map_str(arr: pa.StringArray, fn: Callable[[str], str | None]) -> pa.StringA
     return pa.array(out, type=pa.string())
 
 
-def _map_list(arr: pa.StringArray, fn: Callable[[str], list[str] | None]) -> pa.ListArray:
+def _map_list(arr: pa.StringArray, fn: Callable[[str], list[str] | None]) -> pa.Array[Any]:
     out = [None if x is None else fn(x) for x in arr.to_pylist()]
     return pa.array(out, type=pa.list_(pa.string()))
 
@@ -483,7 +483,7 @@ class PiiTypesFunction(ScalarFunction):
     @classmethod
     def compute(
         cls, text: Annotated[pa.StringArray, Param(doc="Text to scan for PII types.")]
-    ) -> Annotated[pa.ListArray, Returns(arrow_type=pa.list_(pa.string()))]:
+    ) -> Annotated[pa.Array[Any], Returns(arrow_type=pa.list_(pa.string()))]:
         """Map each input row to its output value."""
         return _map_list(text, lambda x: engine.pii_types(x, _DEFAULT_LANGUAGE))
 
@@ -510,7 +510,7 @@ class PiiTypesLanguageFunction(ScalarFunction):
         cls,
         text: Annotated[pa.StringArray, Param(doc="Text to scan for PII types.")],
         language: Annotated[str, ConstParam("ISO language code, e.g. 'en'.")],
-    ) -> Annotated[pa.ListArray, Returns(arrow_type=pa.list_(pa.string()))]:
+    ) -> Annotated[pa.Array[Any], Returns(arrow_type=pa.list_(pa.string()))]:
         """Map each input row to its output value."""
         return _map_list(text, lambda x: engine.pii_types(x, language))
 
