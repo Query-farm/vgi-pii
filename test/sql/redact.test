@@ -8,7 +8,7 @@ statement ok
 LOAD vgi;
 
 statement ok
-ATTACH 'pii' AS pii (TYPE vgi, LOCATION '${VGI_PII_WORKER}');
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION '{VGI_PII_WORKER}');
 
 # ---- has_pii ----
 

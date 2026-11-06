@@ -19,7 +19,7 @@ from typing import Annotated, ClassVar
 
 import pyarrow as pa
 from vgi.arguments import Arg
-from vgi.catalog import Table
+from vgi.catalog import Table, constraint_record
 from vgi.metadata import FunctionExample
 from vgi.table_function import (
     BindParams,
@@ -435,8 +435,22 @@ ENTITY_TYPES_TABLE = Table(
     name="entity_types",
     function=SupportedEntitiesFunction,
     comment="Every PII entity type the analyzer can recognise (default English), one per row.",
-    primary_key=(("entity_type",),),
-    not_null=("entity_type",),
+    # One row per distinct entity type, always populated: trusted (ENFORCED +
+    # ALL_ROWS) records. The explicit NOT_NULL record mirrors the old
+    # `not_null=` declaration; DuckDB under vgi.v3 does not surface a separate
+    # NOT NULL row for a primary-key column, and vgi-lint VGI804 looks for one.
+    constraints=tuple(
+        constraint_record(
+            ["main"],
+            "entity_types",
+            constraint_id,
+            kind,
+            [["entity_type"]],
+            enforcement="ENFORCED",
+            validation="ALL_ROWS",
+        )
+        for constraint_id, kind in (("pk", "PRIMARY_KEY"), ("entity_type_not_null", "NOT_NULL"))
+    ),
     column_comments={
         "entity_type": "A PII entity type the analyzer can detect, e.g. PERSON, EMAIL_ADDRESS.",
     },

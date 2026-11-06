@@ -152,7 +152,7 @@ lifecycle in-process; `tests/test_scalars.py` spawns `pii_worker.py` over the VG
 client/RPC stack exactly as DuckDB would after `ATTACH`. The `test/sql/*.test`
 files are DuckDB sqllogictest cases run by
 [`haybarn-unittest`](https://pypi.org/project/haybarn-unittest/)
-(`uv tool install haybarn-unittest`) against a real `ATTACH` + `SELECT`.
+(haybarn 2.0: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`) against a real `ATTACH` + `SELECT`.
 
 ## Layout
 
