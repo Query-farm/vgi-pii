@@ -19,7 +19,7 @@ anonymizer) and a pinned [spaCy](https://spacy.io/) model.
 
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
-ATTACH 'pii' (TYPE vgi, LOCATION 'uv run pii_worker.py');
+ATTACH 'pii' (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.2.0 vgi-pii-worker');
 
 SELECT pii.has_pii('Call John Smith at john@example.com');     -- true
 SELECT pii.redact('Call John Smith at john@example.com');      -- 'Call <PERSON> at <EMAIL_ADDRESS>'
@@ -33,6 +33,39 @@ The Presidio analyzer is wired to the **`en_core_web_sm`** spaCy pipeline
 (~12 MB, MIT), pinned as a wheel dependency. Everything runs **offline** — no
 network calls at query time — and the model loads **once per worker process**
 and is amortised over every row of every query.
+
+## Quick start
+
+The worker isn't on PyPI; [uv](https://docs.astral.sh/uv/) runs it straight from a tagged release on GitHub. `uvx` builds an isolated environment on the first ATTACH and reuses it afterwards:
+
+```sql
+INSTALL vgi FROM community;
+LOAD vgi;
+
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.2.0 vgi-pii-worker');
+
+-- Flag whether text contains any PII (a boolean predicate for filtering).
+SELECT pii.main.has_pii('Call John Smith at john@example.com');
+
+-- Replace each PII entity with a <TYPE> tag naming its kind.
+SELECT pii.main.redact('Call John Smith at john@example.com');
+```
+
+Change `@v0.2.0` to move to a newer release.
+
+### Other ways to run it
+
+- **Docker** (the image bundles the worker and its dependencies):
+
+  ```sql
+  ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pii:0.2.0');
+  ```
+
+- **From a local checkout** (`git clone https://github.com/Query-farm/vgi-pii`), point `LOCATION` at `uv run --project /path/to/vgi-pii vgi-pii-worker`.
+
+### Build from source
+
+To build and test the worker yourself from a checkout, see [Local development](#local-development).
 
 ## Scalars (per-row) vs. table functions
 
