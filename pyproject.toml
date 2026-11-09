@@ -1,6 +1,6 @@
 [project]
 name = "vgi-pii"
-version = "0.2.0"
+version = "0.3.0"
 description = "Detect + redact PII in text (Microsoft Presidio) as a VGI worker for DuckDB/SQL"
 readme = "README.md"
 requires-python = ">=3.13"
