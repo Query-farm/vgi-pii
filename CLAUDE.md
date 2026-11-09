@@ -111,7 +111,7 @@ uv run ruff check . && uv run mypy vgi_pii/
 `make test-sql` sets `VGI_PII_WORKER="uv run --python 3.13 pii_worker.py"`, puts
 `~/.local/bin` on PATH, and runs `haybarn-unittest --keep-home --test-dir . "test/sql/*"`.
 Install the runner once with `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`
-(haybarn 2.0: its community `vgi` extension speaks the worker's protocol, vgi.v3 / 3.1). CI
+(haybarn 2.0: its community `vgi` extension speaks the worker's protocol, vgi.v3 / 3.2). CI
 (`.github/workflows/ci.yml`) runs unit + lint + a gated `e2e` job. If `make
 test-sql` shows an *intermittent* failure, re-run 2–3× — a loaded host can kill a
 worker; only a consistent failure is real.
