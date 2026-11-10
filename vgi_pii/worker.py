@@ -285,6 +285,7 @@ _AGENT_TEST_TASKS = [
 
 _CATALOG_TAGS = {
     "vgi.title": "PII Detection & Redaction",
+    "vgi.subtitle": "Detect, redact, and mask personal data in text from SQL, using Microsoft Presidio.",
     "vgi.keywords": json.dumps(_CATALOG_KEYWORDS),
     "vgi.doc_llm": _CATALOG_DESCRIPTION_LLM,
     "vgi.doc_md": _CATALOG_DESCRIPTION_MD,
@@ -307,7 +308,7 @@ _PII_CATALOG = Catalog(
             path=["main"],
             comment="Detect, list, redact, and anonymize PII entities in free text",
             tags={
-                "vgi.title": "PII Functions — main",
+                "vgi.title": "PII Functions",
                 "vgi.keywords": json.dumps(_MAIN_KEYWORDS),
                 "vgi.doc_llm": _MAIN_DESCRIPTION_LLM,
                 "vgi.doc_md": _MAIN_DESCRIPTION_MD,
