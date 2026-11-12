@@ -17,4 +17,4 @@ runs the worker over stdio (or HTTP), warming the Presidio engine at startup.
 
 from __future__ import annotations
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"

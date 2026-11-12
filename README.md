@@ -19,7 +19,7 @@ anonymizer) and a pinned [spaCy](https://spacy.io/) model.
 
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
-ATTACH 'pii' (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.3.0 vgi-pii-worker');
+ATTACH 'pii' (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.4.0 vgi-pii-worker');
 
 SELECT pii.has_pii('Call John Smith at john@example.com');     -- true
 SELECT pii.redact('Call John Smith at john@example.com');      -- 'Call <PERSON> at <EMAIL_ADDRESS>'
@@ -42,7 +42,7 @@ The worker isn't on PyPI; [uv](https://docs.astral.sh/uv/) runs it straight from
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.3.0 vgi-pii-worker');
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.4.0 vgi-pii-worker');
 
 -- Flag whether text contains any PII (a boolean predicate for filtering).
 SELECT pii.main.has_pii('Call John Smith at john@example.com');
@@ -51,14 +51,14 @@ SELECT pii.main.has_pii('Call John Smith at john@example.com');
 SELECT pii.main.redact('Call John Smith at john@example.com');
 ```
 
-Change `@v0.3.0` to move to a newer release.
+Change `@v0.4.0` to move to a newer release.
 
 ### Other ways to run it
 
 - **Docker** (the image bundles the worker and its dependencies):
 
   ```sql
-  ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pii:0.3.0');
+  ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pii:0.4.0');
   ```
 
 - **From a local checkout** (`git clone https://github.com/Query-farm/vgi-pii`), point `LOCATION` at `uv run --project /path/to/vgi-pii vgi-pii-worker`.
