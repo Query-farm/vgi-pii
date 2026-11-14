@@ -1,0 +1,527 @@
+{
+  "schema_version": 1,
+  "status": "met",
+  "meets_target": true,
+  "catalogs": {
+    "released": {
+      "catalog_status": "verified",
+      "revision": "v0.4.0",
+      "catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+      "collection_reconciled": false,
+      "denominator": 7,
+      "observed_objects": 7,
+      "required": 7,
+      "verified_count": 7,
+      "candidate_count": 0,
+      "fraction": 1.0,
+      "meets_target": true,
+      "exact_runtime_count": 7,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "anonymize"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "detect_pii"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "entity_types"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "has_pii"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pii_types"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "redact"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "supported_entities"
+        }
+      ],
+      "uncovered": [],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "anonymize",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "anonymize(VARCHAR)",
+            "anonymize(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "detect_pii",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "detect_pii(VARCHAR, DOUBLE, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "entity_types",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "has_pii",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "has_pii(VARCHAR)",
+            "has_pii(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pii_types",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pii_types(VARCHAR)",
+            "pii_types(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "redact",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "redact(VARCHAR)",
+            "redact(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "supported_entities",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "supported_entities(VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    },
+    "current": {
+      "catalog_status": "verified",
+      "revision": "b74d21e37ac8953d1a897af7b9f36e6b67a8a142",
+      "catalog_sha256": "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da",
+      "collection_reconciled": false,
+      "denominator": 7,
+      "observed_objects": 7,
+      "required": 7,
+      "verified_count": 7,
+      "candidate_count": 0,
+      "fraction": 1.0,
+      "meets_target": true,
+      "exact_runtime_count": 0,
+      "runtime_revisions": [
+        "v0.4.0"
+      ],
+      "covered": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "anonymize"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "detect_pii"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "entity_types"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "has_pii"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pii_types"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "redact"
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "supported_entities"
+        }
+      ],
+      "uncovered": [],
+      "objects": [
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "anonymize",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "anonymize(VARCHAR)",
+            "anonymize(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "detect_pii",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "detect_pii(VARCHAR, DOUBLE, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "entity_types",
+          "kinds": [
+            "table"
+          ],
+          "signatures": [],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "has_pii",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "has_pii(VARCHAR)",
+            "has_pii(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "pii_types",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "pii_types(VARCHAR)",
+            "pii_types(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "redact",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "redact(VARCHAR)",
+            "redact(VARCHAR, VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        },
+        {
+          "schema": [
+            "main"
+          ],
+          "name": "supported_entities",
+          "kinds": [
+            "function"
+          ],
+          "signatures": [
+            "supported_entities(VARCHAR)"
+          ],
+          "access": [
+            "read"
+          ],
+          "authentication": [
+            "none"
+          ]
+        }
+      ],
+      "issues": []
+    }
+  },
+  "interface_drift": {
+    "known": true,
+    "current_only": [],
+    "released_only": [],
+    "changed": []
+  },
+  "notebooks": {
+    "01_thresholds_spans_and_redaction.ipynb": {
+      "verified": true,
+      "issues": []
+    }
+  },
+  "examples": [
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "entity_types"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "supported_entities"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "detect_pii"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "has_pii"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "pii_types"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "redact"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    },
+    {
+      "status": "verified",
+      "issues": [],
+      "verified_catalogs": [
+        "released",
+        "current"
+      ],
+      "object": {
+        "schema": [
+          "main"
+        ],
+        "name": "anonymize"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "runtime_revision": "v0.4.0",
+      "runtime_catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2"
+    }
+  ],
+  "issues": []
+}
