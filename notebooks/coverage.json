@@ -1,0 +1,277 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/catalog-released.json",
+      "sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "catalog_sha256": "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+        "notes": "Complete native functions, tables and views exports through actual released Haybarn, cross-checked with worker.py, scalars.py and tables.py registration. Six function names (scalar overloads once) plus entity_types table. No authentication/write or difficult-input exclusions. Public baseline and release have matching logical names/signatures; source unchanged."
+      }
+    },
+    "current": {
+      "path": "coverage/catalog-current.json",
+      "sha256": "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "catalog_sha256": "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da",
+        "notes": "Complete native functions, tables and views exports through actual released Haybarn, cross-checked with worker.py, scalars.py and tables.py registration. Six function names (scalar overloads once) plus entity_types table. No authentication/write or difficult-input exclusions. Public baseline and release have matching logical names/signatures; source unchanged."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_thresholds_spans_and_redaction.ipynb",
+      "sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+      "execution": {
+        "path": "coverage/run-01.json",
+        "sha256": "41a8ea5223ceab6640c281cdadac32aac0358db16186457c51ae08bc10d23f8e"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "entity_types"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "37524212",
+          "reference": "pii.main.entity_types"
+        }
+      ],
+      "narrative_cells": [
+        "ae0462ff"
+      ],
+      "result_cells": [
+        "review-scope-interpretation"
+      ],
+      "interpretation_cells": [
+        "review-scope-interpretation"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Choose a contact-category scope supported by both the browsable reference and the explicitly English recognizer set.",
+        "finding": "Both sources return 24 categories; their intersection supplies all four chosen contact types. This actual intersection restricts detailed span analysis, while scalar examples retain the full default recognizer set. Catalog availability is not detection accuracy."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "supported_entities"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "37524212",
+          "reference": "pii.main.supported_entities"
+        }
+      ],
+      "narrative_cells": [
+        "ae0462ff"
+      ],
+      "result_cells": [
+        "review-scope-interpretation"
+      ],
+      "interpretation_cells": [
+        "review-scope-interpretation"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Choose a contact-category scope supported by both the browsable reference and the explicitly English recognizer set.",
+        "finding": "Both sources return 24 categories; their intersection supplies all four chosen contact types. This actual intersection restricts detailed span analysis, while scalar examples retain the full default recognizer set. Catalog availability is not detection accuracy."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "detect_pii"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "materialize-detections",
+          "reference": "pii.main.detect_pii"
+        }
+      ],
+      "narrative_cells": [
+        "materialize-question"
+      ],
+      "result_cells": [
+        "8aa05b94"
+      ],
+      "interpretation_cells": [
+        "47efd208"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Inspect scored spans and their distinct character coverage across thresholds.",
+        "finding": "Five candidate spans include a nested URL inside email and a low-scoring phone. At cutoff0.5 four retained spans sum to61 characters but cover50 distinct positions. Independent selected detection equals SQL candidate filtering. Offsets/model boundaries are not truth labels."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "has_pii"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "materialize-detections",
+          "reference": "pii.main.has_pii"
+        }
+      ],
+      "narrative_cells": [
+        "3390aace"
+      ],
+      "result_cells": [
+        "02ad9bc3"
+      ],
+      "interpretation_cells": [
+        "02ad9bc3"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Compare the per-row presence decision with redaction and controls at fixed cutoff0.5.",
+        "finding": "The invented note is positive, clean control negative and NULL/empty controls NULL. This scalar keeps its fixed cutoff when detailed review threshold changes, and silent analyzer failure remains an explicitly documented limitation."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "pii_types"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "materialize-detections",
+          "reference": "pii.main.pii_types"
+        }
+      ],
+      "narrative_cells": [
+        "3390aace"
+      ],
+      "result_cells": [
+        "02ad9bc3"
+      ],
+      "interpretation_cells": [
+        "02ad9bc3"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Explain the category list behind each per-row presence decision and fixed redaction result.",
+        "finding": "The note lists EMAIL_ADDRESS, PERSON and URL while the phone remains below the fixed0.5 cutoff. Clean control yields an empty list; NULL/empty inputs remain NULL. The list stays fixed when detailed threshold rises."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "redact"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "materialize-detections",
+          "reference": "pii.main.redact"
+        }
+      ],
+      "narrative_cells": [
+        "3390aace"
+      ],
+      "result_cells": [
+        "02ad9bc3"
+      ],
+      "interpretation_cells": [
+        "02ad9bc3"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Inspect type-tag rewriting beside the selected detailed spans.",
+        "finding": "At fixed0.5 the note contains PERSON, EMAIL_ADDRESS and URL tags, while the synthetic phone remains visible. Overlaps need not produce a tag per span; the configurable detailed threshold does not change this scalar output."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "anonymize"
+      },
+      "notebook": "01_thresholds_spans_and_redaction.ipynb",
+      "sql": [
+        {
+          "cell": "materialize-detections",
+          "reference": "pii.main.anonymize"
+        }
+      ],
+      "narrative_cells": [
+        "3390aace"
+      ],
+      "result_cells": [
+        "02ad9bc3"
+      ],
+      "interpretation_cells": [
+        "02ad9bc3"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_sympy",
+        "reviewed_at": "2026-11-14T18:06:13.394709+00:00",
+        "notebook_sha256": "e638ee6d83433d8c1bf3f0649a26b0b44cf7b3c43d3dc6b305d72ae252d78eca",
+        "catalog_sha256": [
+          "c09a7a223706d3dd96ebb22bcb27ff7757ddb271c4f5625f988d3f9bcd71acb2",
+          "30e281b19de2d490ed5fcfe67c88f0f781a05b8f686f2adc21a63eff849ad3da"
+        ],
+        "purpose": "Compare character masking with type-tag replacement and documented control behavior.",
+        "finding": "Accepted spans are masked with asterisks while surrounding structure and the low-scoring phone remain. Clean input is unchanged, NULL/empty remain NULL. This masking output is not a guarantee of irreversible anonymity."
+      }
+    }
+  ]
+}

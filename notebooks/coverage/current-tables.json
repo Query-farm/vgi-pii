@@ -1,0 +1,13 @@
+{
+  "query": "SELECT schema_name,table_name FROM duckdb_tables() WHERE database_name='pii'",
+  "columns": [
+    "schema_name",
+    "table_name"
+  ],
+  "rows": [
+    [
+      "main",
+      "entity_types"
+    ]
+  ]
+}

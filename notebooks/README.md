@@ -1,40 +1,115 @@
-# PII SQL notebooks
+# Inspect PII spans before interpreting redaction
 
-[What does a stricter PII threshold actually remove?](01_thresholds_spans_and_redaction.ipynb) inspects overlapping detection spans, computes distinct character coverage in SQL, and distinguishes a configurable detector threshold from the worker's fixed-threshold redaction scalars.
+[Open the executed notebook](01_thresholds_spans_and_redaction.ipynb).
 
-## Run from this directory
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Query-farm/vgi-pii/blob/main/notebooks/01_thresholds_spans_and_redaction.ipynb)
 
-Install [uv](https://docs.astral.sh/uv/) and Git. The notebook environment uses Python 3.13 or 3.14; the separate worker explicitly uses Python 3.13 for its spaCy dependencies. First use needs network access to install dependencies, the published Haybarn/VGI extension, the pinned Git revision and the English model wheel. Inference is local. Copying this entire directory is sufficient; no worker checkout or local build is needed.
+The notebook chooses a contact-category review scope from the worker’s reference
+catalog, detects overlapping spans in invented English prose, counts their union
+in SQL and compares a configurable detection threshold with fixed-threshold
+redaction scalars. Its two SVG charts show span boundaries and cutoff sensitivity.
 
-```bash
-uv sync --frozen
-uv run --frozen python execute.py
+In Colab choose **Runtime → Run all**. Shared setup installs only the base package,
+retaining compatible preloaded pandas, Matplotlib and kernel libraries. Inference
+runs locally in a separate Python 3.13 worker environment. No API key, real personal
+record, worker checkout or SQL engine build is needed. If an earlier setup damaged
+the kernel dependencies, save work, choose **Runtime → Disconnect and delete runtime**,
+reconnect and run the updated notebook.
+
+## Run locally
+
+From this directory, with [uv](https://docs.astral.sh/uv/) installed:
+
+```sh
+uv sync --locked
+uv run --locked vgi-notebooks --timeout 300
+uv run --locked vgi-notebooks --timeout 300 --parameters '{"SCORE_THRESHOLD":0.9}' --output-dir artifacts/threshold-09
 ```
 
-Visible SQL launches the exact Git revision `1536e17f93fc19576c52f2f6f126ae7a80c569d2` with `uvx`, SDK 0.51.0 / RPC 0.53.1, Presidio analyzer/anonymizer 2.2.366, spaCy 3.8.18 and the explicit `en_core_web_sm` 3.8.0 wheel. These pins match the tested worker lock. The wheel is supplied explicitly because the source package lists the model in its development extra. The notebook environment independently pins Haybarn 2.0.0rc11. After changing any worker, model or engine pin, rerun both the default and the experiment.
+The worker release is **v0.4.0** and the required English model is
+**en_core_web_sm 3.8.0**. The release lists that model only in its development
+extra, so the visible `uvx` command supplies this one model wheel explicitly;
+there are no transitive dependency overrides. Initial downloads need network access;
+subsequent text analysis is local. These packages belong to the worker process,
+not the notebook kernel. Model/version changes can alter detections, boundaries
+and scores: rerun both default and experiment when upgrading.
 
-For interactive use, register this environment and select it in Jupyter:
+The local notebook lock adds the `[runner]` extra of
+[vgi-example-notebooks v0.3.4](https://github.com/Query-farm/vgi-example-notebooks), while
+Colab uses only its base package. The shared package owns the
+[standard](https://github.com/Query-farm/vgi-example-notebooks/blob/v0.3.4/docs/standard.md),
+runner, canonical branding and SVG presentation. Defaults are saved only after
+successful execution; overrides require a separate destination. Native SVG output
+is accompanied by content-addressed `charts/` image links for GitHub. Review PNGs,
+logs and experiment copies are ignored. No copied standard or custom runner remains.
 
-```bash
-uv run --frozen python -m ipykernel install --user --name vgi-pii-notebooks --display-name 'Python (vgi-pii notebooks)'
+Optional kernel registration:
+
+```sh
+uv run --locked python -m ipykernel install --user --name pii-examples --display-name 'Python (PII examples)'
 ```
 
-Restart and run all after editing `SCORE_THRESHOLD`. Setup, plotting, interpretation source and cleanup are folded; parameters and SQL remain visible. The runner uses a temporary kernel and this directory as cwd. It saves only after success, rejects unknown parameters, and requires a separate destination for overrides.
+## Analytical choices and limits
 
-## One focused experiment
+`entity_types` and `supported_entities(language := 'en')` establish that the
+installed recognizers support PERSON, EMAIL_ADDRESS, PHONE_NUMBER and URL. The
+detailed span analysis uses that contact-category intersection. The scalar examples
+continue to use all default recognizers. Catalog support means a recognizer exists;
+it does not guarantee that it will find every instance.
 
-```bash
-uv run --frozen python execute.py --parameters '{"SCORE_THRESHOLD":0.9}' --output-dir validation/threshold-09
-```
+All input text is invented. The [provenance record](fixtures/provenance.json) retains
+its hash and purpose; a notebook assertion verifies the visible SQL literal against
+that hash without requiring the companion text file. There are no observed capture
+timestamps, service calls or real personal records. SQL materializes each worker
+response before DataFrame display, so captures cannot repeat worker calls.
 
-The default threshold is 0.5. Raising it to 0.9 reduces the selected detections and their unique coverage. It does not configure the per-row `redact`, `anonymize`, `has_pii` or `pii_types` functions: their threshold remains 0.5. Compare the detector outputs and the unchanged tagged/masked scalar outputs, then restore 0.5.
+Offsets are zero-based characters with exclusive end positions. SQL expands each
+interval and counts distinct character positions, avoiding double-counting nested
+URL/email findings. Recognizer scores are not calibrated probabilities. Filtering
+a materialized candidate set creates the cutoff curve; an independent worker call
+verifies the selected threshold. Returned labels and boundaries are model outputs,
+not truth labels or a measured detection accuracy.
 
-The input is entirely synthetic English prose with invented names and contacts; [provenance](fixtures/provenance.json) records its byte hash and purpose. There are no real personal records, observed event timestamps, or service calls. The committed text asset is checked against the visible SQL literal.
+Change only `SCORE_THRESHOLD` from **0.5 to 0.9**, then restart and run all. Compare
+retained spans and unique character coverage. The per-row `has_pii`, `pii_types`,
+`redact` and `anonymize` functions keep their fixed 0.5 cutoff, so their outputs
+should remain unchanged. A stricter detector review cutoff is not a stricter redactor.
+The function called `anonymize` masks accepted spans; retained structure and length
+mean its name does not establish irreversible anonymity.
 
-## Interpretation and checks
+NULL/empty inputs produce NULL scalar outputs; a clean synthetic control is returned
+unchanged. For arbitrary text, unchanged output can mean no accepted finding **or**
+an analyzer error: this worker catches errors and degrades to empty detections or
+unchanged text. The positive synthetic example catches a failed model startup but
+does not certify other inputs. Shared SQL setup starts with an empty temporary
+secret directory and persistent secrets disabled.
 
-Offsets are zero-based characters with an exclusive end. SQL expands intervals and counts distinct character positions, avoiding double-counting nested findings. Recognizer scores are not calibrated probabilities. The sensitivity curve filters a single materialized candidate response; a separate actual worker call verifies the selected cutoff. Entity labels and span boundaries are model outputs, not ground truth. A masked result can retain structure and length and does not prove irreversible anonymity.
+## Coverage and verification
 
-Twelve SQL invariants cover offsets, catalog membership, score filtering, coverage, monotonicity and scalar NULL/control behavior. The text-provenance check is separate. The known positive example helps catch a failed model startup, but this worker can degrade analyzer errors to unchanged text or empty detections. An unchanged result must not be interpreted as a guarantee that text contains no PII.
+[coverage.json](coverage.json) maps all **seven named public SQL surfaces** to
+visible executed queries, results, interpretation and hash-bound execution receipts.
+Full native function/table/view exports are retained under `coverage/`; overloaded
+scalar signatures count once. Both v0.4.0 and the current public source baseline
+have six function names plus the `entity_types` table. No object is excluded.
+Current interface compatibility is reviewed separately from release execution.
 
-Source validation: 42 pytest tests; 70 stdio, 78 HTTP and 70 Unix SQL assertions; Ruff/format, mypy, isolated pydoclint, and metadata quality 100/L2 with zero findings. The saved default outputs are embedded in the notebook. Review charts, logs and experiment copies are ignored under `validation/`; the runner copies fixtures, assets and runtime companions with experiments. [STANDARD.md](STANDARD.md) records presentation conventions.
+The saved default and detached threshold-0.9 experiment pass **14 SQL checks**
+plus the provenance hash assertion. The detached run starts with an empty worker
+uv cache and only the notebook file: no helper, fixture or source checkout is
+needed. Raising the cutoff selects **4→1 spans** and covers **50→16 of 121
+characters**; the fixed-threshold scalar outputs and catalog scope are byte-identical.
+All four chart previews were inspected. Three runner guards and an invalid-threshold
+check preserve the default and reject invalid input before worker attachment.
+
+A fresh Python 3.12 kernel preloads pandas 2.2.3, Matplotlib 3.10.0, IPython 8.30.0,
+ipykernel 6.17.1 and jupyter-client 7.4.9 before the base-only bootstrap. The complete
+notebook executes, retains those versions and passes `pip check`; the local runner
+package is not installed in that kernel. A hosted Colab UI session has not been
+manually exercised.
+
+Source checks pass 42 pytest tests, 70 SQL assertions across four cases, Ruff,
+formatting, mypy and CI-isolated pydoclint. Executed metadata validation reports
+100/100, assurance L2 and zero findings. Worker code and root dependencies remain
+unchanged. The current public baseline is
+`b74d21e37ac8953d1a897af7b9f36e6b67a8a142`; its post-release changes add metadata
+examples and documentation, while the actual named SQL catalog matches v0.4.0.

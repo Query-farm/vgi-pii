@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-pii",
+  "revision": "v0.4.0",
+  "captured_at": "2026-11-14T17:59:26.152735+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/released-functions.json",
+      "sha256": "fec633c9aee2c172a6cc3b8397ab67c9b3e8102886bb3e5341f15a459abfe9b5",
+      "description": "Complete native functions export from actual released Haybarn attached to v0.4.0"
+    },
+    {
+      "path": "coverage/released-tables.json",
+      "sha256": "10e1cab32e93d92b3eef1255a2b3579a2b071da969a8c0597ab6c85e59670caf",
+      "description": "Complete native tables export from actual released Haybarn attached to v0.4.0"
+    },
+    {
+      "path": "coverage/released-views.json",
+      "sha256": "5e1e7e6fb3795aa66e34afea71f9c7651a4ebc5aea7e448f81d8eed38310d149",
+      "description": "Complete native views export from actual released Haybarn attached to v0.4.0"
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "anonymize",
+      "kind": "function",
+      "signatures": [
+        "anonymize(VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "anonymize",
+      "kind": "function",
+      "signatures": [
+        "anonymize(VARCHAR, VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "detect_pii",
+      "kind": "function",
+      "signatures": [
+        "detect_pii(VARCHAR, DOUBLE, VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "has_pii",
+      "kind": "function",
+      "signatures": [
+        "has_pii(VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "has_pii",
+      "kind": "function",
+      "signatures": [
+        "has_pii(VARCHAR, VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "pii_types",
+      "kind": "function",
+      "signatures": [
+        "pii_types(VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "pii_types",
+      "kind": "function",
+      "signatures": [
+        "pii_types(VARCHAR, VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "redact",
+      "kind": "function",
+      "signatures": [
+        "redact(VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "redact",
+      "kind": "function",
+      "signatures": [
+        "redact(VARCHAR, VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "supported_entities",
+      "kind": "function",
+      "signatures": [
+        "supported_entities(VARCHAR)"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "entity_types",
+      "kind": "table",
+      "signatures": [],
+      "authentication": "none",
+      "access": "read"
+    }
+  ]
+}

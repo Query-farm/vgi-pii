@@ -1,0 +1,8 @@
+{
+  "query": "SELECT schema_name,view_name FROM duckdb_views() WHERE database_name='pii'",
+  "columns": [
+    "schema_name",
+    "view_name"
+  ],
+  "rows": []
+}
