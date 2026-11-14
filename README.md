@@ -234,3 +234,7 @@ Written by [Query.Farm](https://query.farm).
 
 Copyright 2026 Query Farm LLC - https://query.farm
 
+
+## SQL notebook
+
+See the [executed PII walkthrough](notebooks/README.md) for detection thresholds, overlapping spans and fixed-threshold redaction, with a reproducible notebook environment.
