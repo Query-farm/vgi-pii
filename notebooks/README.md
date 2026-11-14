@@ -35,9 +35,9 @@ not the notebook kernel. Model/version changes can alter detections, boundaries
 and scores: rerun both default and experiment when upgrading.
 
 The local notebook lock adds the `[runner]` extra of
-[vgi-example-notebooks v0.3.6](https://github.com/Query-farm/vgi-example-notebooks), while
+[vgi-example-notebooks v0.3.8](https://github.com/Query-farm/vgi-example-notebooks), while
 Colab uses only its base package. The shared package owns the
-[standard](https://github.com/Query-farm/vgi-example-notebooks/blob/v0.3.6/docs/standard.md),
+[standard](https://github.com/Query-farm/vgi-example-notebooks/blob/v0.3.8/docs/standard.md),
 runner, canonical branding and SVG presentation. Defaults are saved only after
 successful execution; overrides require a separate destination. Native SVG output
 is accompanied by content-addressed `charts/` image links for GitHub. Review PNGs,
