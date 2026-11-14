@@ -23,8 +23,8 @@ ATTACH 'pii' (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/v
 
 SELECT pii.has_pii('Call John Smith at john@example.com');     -- true
 SELECT pii.redact('Call John Smith at john@example.com');      -- 'Call <PERSON> at <EMAIL_ADDRESS>'
-SELECT pii.anonymize('Call John Smith at john@example.com');   -- 'Call **** at ****************'
-SELECT pii.pii_types('Call John Smith at john@example.com');   -- ['EMAIL_ADDRESS', 'PERSON']
+SELECT pii.anonymize('Call John Smith at john@example.com');   -- 'Call ********** at ****************'
+SELECT pii.pii_types('Call John Smith at john@example.com');   -- ['EMAIL_ADDRESS', 'PERSON', 'URL']
 SELECT * FROM pii.detect_pii('Call John Smith at john@example.com');
 SELECT * FROM pii.supported_entities() ORDER BY entity_type;
 ```
@@ -110,6 +110,7 @@ worker.
 | `pii_types` | scalar | `(text[, language])` | `VARCHAR[]` — distinct entity types, sorted |
 | `detect_pii` | table | `(text, language := 'en', score_threshold := 0.5)` | `(entity_type VARCHAR, text VARCHAR, start INT, end_pos INT, score DOUBLE)` |
 | `supported_entities` | table | `(language := 'en')` | `(entity_type VARCHAR)` |
+| `entity_types` | table (no args) | `SELECT … FROM pii.entity_types` | `(entity_type VARCHAR)` — `supported_entities()` for English, browsable |
 
 The `language` default is `'en'`. `detect_pii.score_threshold` (and the
 threshold used by all scalars) defaults to `0.5` — detections below that
@@ -142,6 +143,25 @@ SELECT id,
 FROM   messages
 WHERE  has_pii(body);
 ```
+
+### Combining functions
+
+The functions compose with each other and with the `entity_types` table. A PII
+prevalence report — how many messages contain each recognizable entity type,
+with types never seen reported as 0:
+
+```sql
+WITH found AS (
+  SELECT id, unnest(pii_types(body)) AS entity_type FROM messages
+)
+SELECT e.entity_type, count(DISTINCT f.id) AS messages
+FROM   pii.entity_types AS e LEFT JOIN found AS f USING (entity_type)
+GROUP  BY e.entity_type
+ORDER  BY messages DESC, e.entity_type;
+```
+
+`detect_pii` takes literal arguments only (not a column via `LATERAL`), so
+per-row work over a column uses the scalars.
 
 ## Dependencies & licensing
 

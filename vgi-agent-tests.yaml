@@ -31,3 +31,7 @@ tasks:
     reference_sql: "SELECT count(*) > 0 FROM pii.main.entity_types WHERE entity_type = 'CREDIT_CARD'"
     success_criteria: "Returns a single boolean that is true, determined by looking up CREDIT_CARD in the worker's browsable table of recognizable entity types."
     ignore_column_names: true
+  - name: redact-tickets-with-email
+    reference_sql: "WITH tickets(id, body) AS (VALUES (1, 'Hi, this is John Smith, my email is john.smith@example.com'), (2, 'Please charge my card 4111-1111-1111-1111 today'), (3, 'The printer on floor 3 is jammed again'), (4, 'Jane Doe can be reached at jane@example.org')) SELECT id, pii.main.redact(body) AS redacted FROM tickets WHERE list_contains(pii.main.pii_types(body), 'EMAIL_ADDRESS') ORDER BY id"
+    success_criteria: "Returns tickets 1 and 4 only, each with its tag-redacted body from the worker's redact function (e.g. 'Hi, this is <PERSON>, my email is <EMAIL_ADDRESS>'), selected by the worker's detected PII types."
+    ignore_column_names: true

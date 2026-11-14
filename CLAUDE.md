@@ -22,6 +22,7 @@ vgi_pii/
   engine.py        pure Presidio lifecycle + logic; analyzer/anonymizer cached per-process; no Arrow/VGI; unit-testable
   scalars.py       per-row scalars (arity overload for the optional `language`)
   tables.py        table functions: detect_pii, supported_entities
+  examples.py      composed example SQL constants (schema + per-object example lists)
   schema_utils.py  pa.Field comment / column-doc helper
 tests/             pytest: test_engine (pure), test_tables (in-proc), test_scalars (Client RPC)
 test/sql/*.test    haybarn-unittest sqllogictest — authoritative E2E
@@ -67,9 +68,12 @@ function-shape split:
 3. **`haybarn-unittest` skips `require vgi`.** Under haybarn the extension is not
    autoloaded for `require`, so a `.test` using `require vgi` is silently SKIPPED.
    Every `.test` here uses explicit `statement ok` / `LOAD vgi;` instead.
-4. **`UNNEST` only in a FROM subquery under haybarn's DuckDB.** `SELECT
-   UNNEST(...)` in a bare projection raises *"UNNEST not supported here"*; wrap it
-   as `FROM (SELECT UNNEST(pii_types(...)) AS t)`. See `test/sql/detect.test`.
+4. **`detect_pii` takes literals only.** DuckDB rejects a column argument
+   (`FROM t, LATERAL pii.main.detect_pii(t.body)` → *"does not support lateral
+   join column parameters"*), so per-row work over a column uses the scalars
+   (`unnest(pii_types(body))`). Composed examples live in `vgi_pii/examples.py`
+   (one constant per SQL, referenced from schema/function metadata) and are run
+   by `test/sql/compose.test`.
 5. **`end` is a SQL keyword** — `detect_pii`'s exclusive end offset column is
    named **`end_pos`**, not `end`.
 6. **PERSON detection depends on the model.** With the small `en_core_web_sm`

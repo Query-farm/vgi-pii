@@ -23,8 +23,8 @@ Usage:
 
     SELECT pii.main.has_pii('Call John Smith at john@example.com');        -- true
     SELECT pii.main.redact('Call John Smith at john@example.com');         -- 'Call <PERSON> at <EMAIL_ADDRESS>'
-    SELECT pii.main.anonymize('Call John Smith at john@example.com');      -- 'Call **** at ****************'
-    SELECT pii.main.pii_types('Call John Smith at john@example.com');      -- ['EMAIL_ADDRESS', 'PERSON']
+    SELECT pii.main.anonymize('Call John Smith at john@example.com');      -- 'Call ********** at ****************'
+    SELECT pii.main.pii_types('Call John Smith at john@example.com');      -- ['EMAIL_ADDRESS', 'PERSON', 'URL']
     SELECT * FROM pii.main.detect_pii('Call John Smith at john@example.com');
     SELECT * FROM pii.main.supported_entities() ORDER BY entity_type;
 """
@@ -38,6 +38,7 @@ from vgi import Worker
 from vgi.catalog import Catalog, Schema
 
 from vgi_pii import engine
+from vgi_pii.examples import COMPOSED_EXAMPLES
 from vgi_pii.scalars import SCALAR_FUNCTIONS
 from vgi_pii.tables import DISCOVERY_TABLES, TABLE_FUNCTIONS
 
@@ -164,6 +165,7 @@ _MAIN_EXAMPLE_QUERIES = json.dumps(
             "description": "Discover which entity types the analyzer can detect.",
             "sql": "SELECT entity_type FROM pii.main.supported_entities() ORDER BY entity_type",
         },
+        *COMPOSED_EXAMPLES,
     ]
 )
 
@@ -261,6 +263,17 @@ _AGENT_TEST_TASKS = [
         "prompt": (
             "Produce a copy of the text 'Email jane@example.com now' in which every PII value's "
             "characters are masked with asterisks."
+        ),
+    },
+    {
+        "name": "redact-tickets-with-email",
+        "prompt": (
+            "Given the support tickets (id, body) = (1, 'Hi, this is John Smith, my email is "
+            "john.smith@example.com'), (2, 'Please charge my card 4111-1111-1111-1111 today'), "
+            "(3, 'The printer on floor 3 is jammed again'), (4, 'Jane Doe can be reached at "
+            "jane@example.org'): return only the tickets in which an EMAIL_ADDRESS is detected, "
+            "as two columns -- id (INTEGER) and the ticket body with every PII value replaced by "
+            "a tag naming its entity type (VARCHAR) -- ordered by id."
         ),
     },
     {

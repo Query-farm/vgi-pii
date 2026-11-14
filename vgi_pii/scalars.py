@@ -37,6 +37,7 @@ from vgi.metadata import FunctionExample
 from vgi.scalar_function import ScalarFunction
 
 from . import engine
+from .examples import SCRUB_TICKETS, TYPE_PREVALENCE
 from .meta import object_tags
 
 _DEFAULT_LANGUAGE = "en"
@@ -150,6 +151,7 @@ _REDACT_TAGS = object_tags(
             "description": "Tag-redact PII with an explicit ISO language.",
             "sql": "SELECT pii.main.redact('Call John Smith at john@example.com', 'en')",
         },
+        SCRUB_TICKETS,
     ],
 )
 
@@ -165,7 +167,7 @@ _ANONYMIZE_TAGS = object_tags(
         "language code (defaults to `'en'`).\n"
         "- **Output:** `VARCHAR` -- the same text with each entity replaced by `*` characters.\n"
         "- **Example:** `'Call John Smith at john@example.com'` -> "
-        "`'Call **** at ****************'`.\n"
+        "`'Call ********** at ****************'`.\n"
         "- **Edge cases:** `NULL`, empty, or whitespace-only input returns `NULL`; text "
         "with no PII is returned unchanged.\n\n"
         "Contrast with `redact`, which labels each entity with a `<TYPE>` tag. Backed by "
@@ -178,7 +180,7 @@ _ANONYMIZE_TAGS = object_tags(
         "## Usage\n\n"
         "```sql\n"
         "SELECT pii.main.anonymize('Call John Smith at john@example.com');\n"
-        "-- 'Call **** at ****************'\n"
+        "-- 'Call ********** at ****************'\n"
         "```\n\n"
         "## Notes\n\n"
         "Choose `anonymize` over `redact` when the type label `<PERSON>` would itself leak "
@@ -200,7 +202,7 @@ _ANONYMIZE_TAGS = object_tags(
     category="redaction",
     examples=[
         {
-            "description": "Mask each PII entity's characters (-> 'Call **** at ****************').",
+            "description": "Mask each PII entity's characters (-> 'Call ********** at ****************').",
             "sql": "SELECT pii.main.anonymize('Call John Smith at john@example.com')",
         },
         {
@@ -221,9 +223,11 @@ _PII_TYPES_TAGS = object_tags(
         "- **Input:** a `VARCHAR` of free text; an optional second argument is the ISO "
         "language code (defaults to `'en'`).\n"
         "- **Output:** `VARCHAR[]` -- the sorted, de-duplicated set of detected entity "
-        "type names, e.g. `['EMAIL_ADDRESS', 'PERSON']`.\n"
+        "type names, e.g. `['EMAIL_ADDRESS', 'PERSON', 'URL']`.\n"
         "- **Edge cases:** `NULL`, empty, or whitespace-only input returns `NULL`; text "
-        "with no PII returns an empty list.\n\n"
+        "with no PII returns an empty list. Every detection above the threshold counts, "
+        "including overlapping ones: an email address also yields `URL` for its domain "
+        "(`redact` keeps only the `<EMAIL_ADDRESS>` tag).\n\n"
         "For one row per occurrence (with offsets and confidence) use the `detect_pii` "
         "table function instead. Backed by Microsoft Presidio."
     ),
@@ -234,7 +238,7 @@ _PII_TYPES_TAGS = object_tags(
         "## Usage\n\n"
         "```sql\n"
         "SELECT pii.main.pii_types('Call John Smith at john@example.com');\n"
-        "-- ['EMAIL_ADDRESS', 'PERSON']\n"
+        "-- ['EMAIL_ADDRESS', 'PERSON', 'URL']\n"
         "```\n\n"
         "## Notes\n\n"
         "This is a compact summary; for per-occurrence detail (matched text, offsets, "
@@ -255,13 +259,14 @@ _PII_TYPES_TAGS = object_tags(
     category="detection",
     examples=[
         {
-            "description": "List the distinct PII types in text (-> ['EMAIL_ADDRESS', 'PERSON']).",
+            "description": "List the distinct PII types in text (-> ['EMAIL_ADDRESS', 'PERSON', 'URL']).",
             "sql": "SELECT pii.main.pii_types('Call John Smith at john@example.com')",
         },
         {
             "description": "List the distinct PII types with an explicit ISO language.",
             "sql": "SELECT pii.main.pii_types('Call John Smith at john@example.com', 'en')",
         },
+        TYPE_PREVALENCE,
     ],
 )
 
@@ -364,6 +369,7 @@ class RedactFunction(ScalarFunction):
                 sql="SELECT pii.main.redact('Call John Smith at john@example.com')",
                 description="Tag-redact PII (-> 'Call <PERSON> at <EMAIL_ADDRESS>')",
             ),
+            FunctionExample(sql=SCRUB_TICKETS["sql"], description=SCRUB_TICKETS["description"]),
         ]
 
     @classmethod
@@ -419,7 +425,7 @@ class AnonymizeFunction(ScalarFunction):
         examples = [
             FunctionExample(
                 sql="SELECT pii.main.anonymize('Call John Smith at john@example.com')",
-                description="Mask PII (-> 'Call **** at ****************')",
+                description="Mask PII (-> 'Call ********** at ****************')",
             ),
         ]
 
@@ -476,8 +482,9 @@ class PiiTypesFunction(ScalarFunction):
         examples = [
             FunctionExample(
                 sql="SELECT pii.main.pii_types('Call John Smith at john@example.com')",
-                description="The distinct PII types in text (-> ['EMAIL_ADDRESS', 'PERSON'])",
+                description="The distinct PII types in text (-> ['EMAIL_ADDRESS', 'PERSON', 'URL'])",
             ),
+            FunctionExample(sql=TYPE_PREVALENCE["sql"], description=TYPE_PREVALENCE["description"]),
         ]
 
     @classmethod

@@ -1,0 +1,48 @@
+# name: test/sql/compose.test
+# description: composed examples (vgi_pii/examples.py) -- several worker objects in one query
+# group: [vgi_pii]
+
+require-env VGI_PII_WORKER
+
+statement ok
+LOAD vgi;
+
+statement ok
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION '{VGI_PII_WORKER}');
+
+# SCRUB_TICKETS: has_pii filter + redact + pii_types.
+query ITT
+WITH tickets(id, body) AS (VALUES (1, 'Hi, this is John Smith, my email is john.smith@example.com'), (2, 'Please charge my card 4111-1111-1111-1111 today'), (3, 'The printer on floor 3 is jammed again'), (4, 'Jane Doe can be reached at jane@example.org')) SELECT id, pii.main.redact(body) AS redacted, pii.main.pii_types(body) AS pii_found FROM tickets WHERE pii.main.has_pii(body) ORDER BY id;
+----
+1	Hi, this is <PERSON>, my email is <EMAIL_ADDRESS>	[EMAIL_ADDRESS, PERSON, URL]
+2	Please charge my card <CREDIT_CARD> today	[CREDIT_CARD, DATE_TIME]
+4	<PERSON> can be reached at <EMAIL_ADDRESS>	[EMAIL_ADDRESS, PERSON, URL]
+
+# TYPE_PREVALENCE: pii_types unnested, LEFT-joined from the entity_types table.
+# Every recognizable type is listed; the seen ones lead.
+query TI
+SELECT entity_type, tickets FROM (WITH tickets(id, body) AS (VALUES (1, 'Hi, this is John Smith, my email is john.smith@example.com'), (2, 'Please charge my card 4111-1111-1111-1111 today'), (3, 'The printer on floor 3 is jammed again'), (4, 'Jane Doe can be reached at jane@example.org')), found AS (SELECT id, unnest(pii.main.pii_types(body)) AS entity_type FROM tickets) SELECT e.entity_type, count(DISTINCT f.id) AS tickets FROM pii.main.entity_types AS e LEFT JOIN found AS f USING (entity_type) GROUP BY e.entity_type ORDER BY tickets DESC, e.entity_type) WHERE tickets > 0 ORDER BY tickets DESC, entity_type;
+----
+EMAIL_ADDRESS	2
+PERSON	2
+URL	2
+CREDIT_CARD	1
+DATE_TIME	1
+
+query I
+SELECT count(*) = (SELECT count(*) FROM pii.main.entity_types) FROM (WITH tickets(id, body) AS (VALUES (1, 'Hi, this is John Smith, my email is john.smith@example.com'), (2, 'Please charge my card 4111-1111-1111-1111 today'), (3, 'The printer on floor 3 is jammed again'), (4, 'Jane Doe can be reached at jane@example.org')), found AS (SELECT id, unnest(pii.main.pii_types(body)) AS entity_type FROM tickets) SELECT e.entity_type, count(DISTINCT f.id) AS tickets FROM pii.main.entity_types AS e LEFT JOIN found AS f USING (entity_type) GROUP BY e.entity_type ORDER BY tickets DESC, e.entity_type);
+----
+true
+
+# THRESHOLD_DROPOUTS: pii_types (0.5) EXCEPT detect_pii(score_threshold := 0.9).
+query T
+SELECT unnest(pii.main.pii_types('Hi, this is John Smith, my email is john.smith@example.com')) AS entity_type EXCEPT SELECT entity_type FROM pii.main.detect_pii('Hi, this is John Smith, my email is john.smith@example.com', score_threshold := 0.9) ORDER BY entity_type;
+----
+PERSON
+URL
+
+# README quick-start claims (catalog.function form, default schema).
+query TT
+SELECT pii.anonymize('Call John Smith at john@example.com'), pii.pii_types('Call John Smith at john@example.com');
+----
+Call ********** at ****************	[EMAIL_ADDRESS, PERSON, URL]

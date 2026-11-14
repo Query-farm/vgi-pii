@@ -32,6 +32,7 @@ from vgi.table_function import (
 from vgi_rpc.rpc import OutputCollector
 
 from . import engine
+from .examples import SCRUB_TICKETS, THRESHOLD_DROPOUTS, TYPE_PREVALENCE
 from .meta import keywords_json, object_tags
 from .schema_utils import field
 
@@ -77,6 +78,8 @@ _EXECUTABLE_EXAMPLES = json.dumps(
             "description": "Count how many PII entity types the analyzer supports.",
             "sql": "SELECT count(*) AS n FROM pii.main.supported_entities()",
         },
+        SCRUB_TICKETS,
+        THRESHOLD_DROPOUTS,
     ]
 )
 
@@ -190,6 +193,7 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                             "pii.main.detect_pii('Email john@example.com', score_threshold := 0.8)"
                         ),
                     },
+                    THRESHOLD_DROPOUTS,
                 ],
             ),
             "vgi.result_columns_schema": json.dumps(
@@ -239,6 +243,7 @@ class DetectPiiFunction(TableFunctionGenerator[_DetectPiiArgs]):
                 ),
                 description="Only high-confidence detections",
             ),
+            FunctionExample(sql=THRESHOLD_DROPOUTS["sql"], description=THRESHOLD_DROPOUTS["description"]),
         ]
 
     @classmethod
@@ -488,6 +493,7 @@ ENTITY_TYPES_TABLE = Table(
                         "FROM pii.main.entity_types WHERE entity_type = 'CREDIT_CARD'"
                     ),
                 },
+                TYPE_PREVALENCE,
             ]
         ),
     },
