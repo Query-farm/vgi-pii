@@ -44,13 +44,16 @@ from vgi_pii.tables import DISCOVERY_TABLES, TABLE_FUNCTIONS
 
 _CATALOG_DESCRIPTION_LLM = (
     "Detect and redact personally-identifiable information (PII) in free text directly in SQL, "
-    "backed by Microsoft Presidio (analyzer + anonymizer) and a spaCy NLP model. Find whether "
-    "text contains PII (has_pii), list the distinct entity types present (pii_types), replace each "
-    "entity with its type tag (redact, e.g. '<PERSON>'), mask each entity's characters (anonymize), "
-    "enumerate every detected entity with offsets and confidence (detect_pii), and discover the "
-    "entity types the analyzer supports (supported_entities). Detected types include PERSON, "
-    "EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, US_SSN, LOCATION, URL, IP_ADDRESS and more. Use for "
-    "privacy scrubbing, data-loss-prevention checks, and PII auditing of text columns."
+    "backed by Microsoft Presidio (analyzer + anonymizer) and a pinned spaCy NLP model, so text "
+    "never leaves the database. The work splits into detection and redaction. Detection inspects "
+    "a value without changing it: a boolean check for filtering, the distinct entity types present, "
+    "or one row per detected entity with its character offsets and a confidence score you can "
+    "threshold. Redaction rewrites the value, either replacing each entity with a tag naming its "
+    "type (e.g. '<PERSON>') or masking its characters so even the shape is hidden. Detected types "
+    "include PERSON, EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, US_SSN, LOCATION, URL, IP_ADDRESS and "
+    "more; the set the analyzer recognises is itself queryable. Use for privacy scrubbing, "
+    "data-loss-prevention checks, and PII auditing of text columns. Detection is statistical: "
+    "expect misses and false positives, especially for names and locations."
 )
 
 _CATALOG_DESCRIPTION_MD = (
