@@ -2019,9 +2019,10 @@ wheels = [
 
 [[package]]
 name = "vgi-pii"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "." }
 dependencies = [
+    { name = "en-core-web-sm" },
     { name = "presidio-analyzer" },
     { name = "presidio-anonymizer" },
     { name = "pyarrow" },
@@ -2031,7 +2032,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "en-core-web-sm" },
     { name = "mypy" },
     { name = "pyarrow-stubs" },
     { name = "pydoclint" },
@@ -2047,7 +2047,7 @@ serve = [
 
 [package.metadata]
 requires-dist = [
-    { name = "en-core-web-sm", marker = "extra == 'dev'", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
+    { name = "en-core-web-sm", url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "presidio-analyzer", specifier = ">=2.2" },
     { name = "presidio-anonymizer", specifier = ">=2.2" },

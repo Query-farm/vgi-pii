@@ -9,6 +9,8 @@ first test pays the model-load cost and the rest are fast.
 
 from __future__ import annotations
 
+import pytest
+
 from vgi_pii import engine
 
 # A fixture sentence with several distinct PII types well above threshold.
@@ -139,3 +141,26 @@ class TestEdgeCases:
             # None of these should raise; result is bool/str/None as appropriate.
             assert engine.has_pii(s) in (True, False)
             assert engine.redact(s) is not None
+
+
+class TestMissingModel:
+    """A missing spaCy model is a loud install error, never "nothing detected"."""
+
+    def test_model_is_installed(self) -> None:
+        # The model is a direct-URL [project] dependency, so it is always present.
+        engine._require_model()
+
+    def test_missing_model_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(engine, "SPACY_MODEL", "en_core_web_does_not_exist")
+        engine._analyzer.cache_clear()
+        try:
+            with pytest.raises(engine.ModelNotInstalledError, match="en_core_web_does_not_exist"):
+                engine.supported_entities()
+            with pytest.raises(engine.ModelNotInstalledError):
+                engine.detect("Call John Smith at john@example.com")
+            with pytest.raises(engine.ModelNotInstalledError):
+                engine.redact("Call John Smith at john@example.com")
+        finally:
+            monkeypatch.undo()
+            engine._analyzer.cache_clear()
+        assert engine.supported_entities()

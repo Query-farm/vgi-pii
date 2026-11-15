@@ -38,11 +38,8 @@ COPY vgi_pii ./vgi_pii
 RUN pip install '.[serve]'
 
 # Presidio defaults to the ~400 MB en_core_web_lg model and would try to DOWNLOAD it at
-# runtime; the worker instead pins the small en_core_web_sm (~12 MB, MIT). It is not a PyPI
-# package, so install it from the spaCy-models release wheel by direct URL (matches the
-# pyproject `[tool.uv.sources]` pin + the pii_worker.py PEP 723 header).
-RUN pip install \
-    "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
+# runtime; the worker instead pins the small en_core_web_sm (~12 MB, MIT) as a direct-URL
+# [project] dependency, so `pip install '.[serve]'` above already installed it.
 
 # Warm the Presidio analyzer + spaCy model once at build time so the first query in a
 # running container is fast (best-effort; never fails the build).

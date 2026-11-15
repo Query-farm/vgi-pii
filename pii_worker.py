@@ -5,11 +5,8 @@
 #     "presidio-analyzer>=2.2",
 #     "presidio-anonymizer>=2.2",
 #     "spacy>=3.7",
-#     "en-core-web-sm",
+#     "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
 # ]
-#
-# [tool.uv.sources]
-# en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 # ///
 """Repo-root PEP 723 shim for the vgi-pii worker.
 

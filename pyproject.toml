@@ -1,6 +1,6 @@
 [project]
 name = "vgi-pii"
-version = "0.4.1"
+version = "0.4.2"
 description = "Detect + redact PII in text (Microsoft Presidio) as a VGI worker for DuckDB/SQL"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -22,6 +22,12 @@ dependencies = [
     "presidio-analyzer>=2.2",
     "presidio-anonymizer>=2.2",
     "spacy>=3.7",
+    # The small English spaCy pipeline (~12 MB, MIT) as a direct-URL wheel. It must be
+    # a plain [project] dependency (not a [tool.uv.sources] entry): `uvx --from git+...`
+    # and pip ignore tool.uv.sources, which left the model uninstalled and the analyzer
+    # with nothing to detect. Presidio defaults to en_core_web_lg (~400 MB) otherwise;
+    # engine.py wires the analyzer to this small model and never downloads at runtime.
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
     "pyarrow",
 ]
 
@@ -44,7 +50,6 @@ dev = [
     "ruff>=0.5",
     "pydoclint",
     "pyarrow-stubs",
-    "en-core-web-sm",
 ]
 
 [project.scripts]
@@ -55,15 +60,13 @@ vgi-pii-worker = "vgi_pii.worker:main"
 [project.urls]
 Homepage = "https://query.farm"
 
-[tool.uv.sources]
-# Pin the small English spaCy pipeline (~12 MB, MIT) as a wheel so it is
-# installed (never downloaded at runtime). Presidio defaults to en_core_web_lg
-# (~400 MB) otherwise; engine.py wires the analyzer to this small model.
-en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+# en-core-web-sm is a direct-URL dependency (see [project] dependencies).
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["vgi_pii"]

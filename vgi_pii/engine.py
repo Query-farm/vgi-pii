@@ -15,13 +15,24 @@ try to *download* it on first use -- a slow, network-dependent surprise. Pinning
 the small model (~12 MB, installed as a wheel dependency) keeps the worker
 hermetic, light, and deterministic.
 
+The model is a direct-URL ``[project]`` dependency so every installer (``uvx
+--from git+...``, pip, ``uv run``) installs it. If it is missing anyway, the
+analyzer refuses to build and raises :class:`ModelNotInstalledError` -- it never
+falls back to Presidio's runtime ``spacy download`` (which needs pip/uv on PATH
+and network, and exits the worker when it can't), and it never
+degrades to "no entity types / nothing detected".
+
 Everything here is pure (no Arrow / VGI types) and directly unit-testable. All
-functions are **total**: NULL/empty text yields an empty result / ``None`` and
-no input ever raises out of this module.
+functions are **total** over their inputs: NULL/empty text yields an empty
+result / ``None`` and no input ever raises out of this module. The one error
+that does propagate is :class:`ModelNotInstalledError` -- a broken install, not
+a bad row.
 """
 
 from __future__ import annotations
 
+import importlib.util
+import sys
 import threading
 from functools import lru_cache
 from typing import TYPE_CHECKING, Any, NamedTuple
@@ -44,6 +55,23 @@ DEFAULT_SCORE_THRESHOLD = 0.5
 _MASK_CHAR = "*"
 
 _lock = threading.Lock()
+
+
+class ModelNotInstalledError(RuntimeError):
+    """The pinned spaCy model is not installed, so PII detection cannot run."""
+
+
+def _require_model() -> None:
+    """Raise :class:`ModelNotInstalledError` unless the pinned model is importable."""
+    if importlib.util.find_spec(SPACY_MODEL) is None:
+        raise ModelNotInstalledError(
+            f"vgi-pii: the spaCy model '{SPACY_MODEL}' is not installed in the worker's Python "
+            "environment, so no PII can be detected. It is a direct-URL dependency of vgi-pii; "
+            "reinstall the worker (e.g. `uvx --from git+https://github.com/Query-farm/vgi-pii@<tag> "
+            "vgi-pii-worker`) or install it with `pip install "
+            "'en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/"
+            "en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl'`."
+        )
 
 
 class Entity(NamedTuple):
@@ -69,6 +97,9 @@ class Entity(NamedTuple):
 @lru_cache(maxsize=1)
 def _analyzer() -> AnalyzerEngine:
     """The Presidio ``AnalyzerEngine``, built once with the pinned spaCy model."""
+    # Check first: a missing model would otherwise make Presidio attempt a runtime
+    # download (pip/uv + network), exiting the process or degrading silently.
+    _require_model()
     from presidio_analyzer import AnalyzerEngine
     from presidio_analyzer.nlp_engine import NlpEngineProvider
 
@@ -131,6 +162,10 @@ def warm_up() -> None:
         # Trigger the lazy recognizer/NLP-inference path once so the first real
         # query is warm. Output is discarded; failures are non-fatal.
         _anonymize("Warm up john@example.com", "en", DEFAULT_SCORE_THRESHOLD, operators=None)
+    except ModelNotInstalledError as exc:
+        # Not fatal at spawn (ATTACH and metadata still work), but say so on
+        # stderr -- stdout is the RPC stream. Every detection call raises it too.
+        print(f"WARNING: {exc}", file=sys.stderr, flush=True)
     except Exception:  # pragma: no cover - best-effort warmup
         pass
 
@@ -151,7 +186,7 @@ def detect(
 ) -> list[Entity]:
     """All PII entities in ``text`` at/above ``score_threshold``.
 
-    Returns ``[]`` for NULL/empty text. Never raises: any analyzer error for an
+    Returns ``[]`` for NULL/empty text. Never raises on input: any analyzer error for an
     odd input degrades to an empty result so the worker can't crash on a row.
     Results are returned in a deterministic order (by start, then entity type).
     """
@@ -160,6 +195,8 @@ def detect(
     assert text is not None  # for type-checkers; guarded by _has_text
     try:
         results = analyzer().analyze(text=text, language=language, score_threshold=score_threshold)
+    except ModelNotInstalledError:
+        raise
     except Exception:
         return []
     entities = [
@@ -223,6 +260,8 @@ def _anonymize(
             )
             .text
         )
+    except ModelNotInstalledError:
+        raise
     except Exception:
         # Never crash a row: fall back to returning the text unchanged.
         return text
@@ -266,5 +305,7 @@ def supported_entities(language: str = "en") -> list[str]:
     """Every entity type the analyzer can detect for ``language``, sorted."""
     try:
         return sorted(analyzer().get_supported_entities(language=language))
+    except ModelNotInstalledError:
+        raise
     except Exception:
         return []

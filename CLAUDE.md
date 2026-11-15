@@ -57,9 +57,17 @@ function-shape split:
 1. **Pin the spaCy model; do NOT let Presidio pick.** With no explicit NLP
    config, `AnalyzerEngine()` defaults to `en_core_web_lg` (~400 MB) and tries to
    **download** it on first use. `engine._analyzer()` wires an
-   `NlpEngineProvider` to `en_core_web_sm` (~12 MB, installed as a wheel via the
-   pyproject `[tool.uv.sources]` + PEP 723 header) so the worker is hermetic and
-   light. Change the model in one place: `engine.SPACY_MODEL`.
+   `NlpEngineProvider` to `en_core_web_sm` (~12 MB, installed as a wheel) so the
+   worker is hermetic and light. Change the model in one place: `engine.SPACY_MODEL`
+   (plus the wheel URL in pyproject + the PEP 723 header).
+   The wheel MUST be a direct-URL `[project]` dependency
+   (`en-core-web-sm @ https://...whl`), never a `[tool.uv.sources]` entry:
+   `uvx --from git+...` (the README install) and pip ignore tool.uv.sources, so
+   0.4.1 shipped without the model -- Presidio then tried a runtime
+   `spacy download` that either `SystemExit`ed the worker (no pip/uv on PATH) or
+   failed into swallowed errors (0 entity types, nothing detected). `engine`
+   now checks the model is importable and raises `ModelNotInstalledError`
+   instead of downloading or degrading silently.
 2. **Warm the engine once, at spawn.** Building the analyzer loads spaCy (~1-2 s),
    lazily. `PiiWorker.run()` calls `engine.warm_up()` before serving so the first
    query of every ATTACH isn't slow — otherwise a worker-pool teardown SIGTERM
@@ -86,6 +94,8 @@ function-shape split:
    **unchanged** (not NULL); `has_pii` → `false`; `pii_types` → empty list `[]`.
 8. **Never crash a row.** `engine` catches per-call exceptions and degrades to
    "no PII" / unchanged text, so an odd input can't take down the worker.
+   The exception is `ModelNotInstalledError` (a broken install, not a bad row):
+   it propagates so a missing model is loud, never "nothing detected".
 9. **The unit suite can pass while the RPC path is broken.** `test_engine.py`
    calls pure functions directly; only `test_scalars.py` (real `vgi.client.Client`
    subprocess) and `test/sql/*.test` (real `ATTACH`+`SELECT`) exercise the wire.
