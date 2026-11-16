@@ -6,7 +6,7 @@
 # See docker-entrypoint.sh. Keyless; PII detection/redaction runs in-process via
 # Microsoft Presidio + a pinned en_core_web_sm spaCy model. No persistent state volume.
 # syntax=docker/dockerfile:1
-FROM python:3.13-slim
+FROM python:3.14-slim
 
 ARG VERSION=0.0.0
 ARG GIT_COMMIT=unknown

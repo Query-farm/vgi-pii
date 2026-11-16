@@ -103,7 +103,7 @@ function-shape split:
 
 ## Python pin
 
-spaCy ships **cp313** wheels but not cp314 yet, so `.python-version` pins `3.13`
+spaCy ships **cp313** wheels but not cp314 yet, so `.python-version` pins `3.14`
 (committed). Without it `uv sync` may pick 3.14 and fail to resolve spaCy.
 
 ## Licensing
@@ -122,7 +122,7 @@ make test                     # both
 uv run ruff check . && uv run mypy vgi_pii/
 ```
 
-`make test-sql` sets `VGI_PII_WORKER="uv run --python 3.13 pii_worker.py"`, puts
+`make test-sql` sets `VGI_PII_WORKER="uv run --python 3.14 pii_worker.py"`, puts
 `~/.local/bin` on PATH, and runs `haybarn-unittest --keep-home --test-dir . "test/sql/*"`.
 Install the runner once with `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`
 (haybarn 2.0: its community `vgi` extension speaks the worker's protocol, vgi.v3 / 3.3). CI
