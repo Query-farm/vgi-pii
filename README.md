@@ -19,7 +19,7 @@ anonymizer) and a pinned [spaCy](https://spacy.io/) model.
 
 ```sql
 INSTALL vgi FROM community; LOAD vgi;
-ATTACH 'pii' (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.4.3 vgi-pii-worker');
+ATTACH 'pii' (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.5.0 vgi-pii-worker');
 
 SELECT pii.has_pii('Call John Smith at john@example.com');     -- true
 SELECT pii.redact('Call John Smith at john@example.com');      -- 'Call <PERSON> at <EMAIL_ADDRESS>'
@@ -34,6 +34,8 @@ The Presidio analyzer is wired to the **`en_core_web_sm`** spaCy pipeline
 network calls at query time — and the model loads **once per worker process**
 and is amortised over every row of every query.
 
+vgi-pii 0.5.0 speaks VGI protocol 3.4, so it needs Haybarn 2.0.1 or newer (Haybarn 2.0.0 loads a 3.3 `vgi` extension that cannot attach it).
+
 ## Quick start
 
 The worker isn't on PyPI; [uv](https://docs.astral.sh/uv/) runs it straight from a tagged release on GitHub. `uvx` builds an isolated environment on the first ATTACH and reuses it afterwards:
@@ -42,7 +44,7 @@ The worker isn't on PyPI; [uv](https://docs.astral.sh/uv/) runs it straight from
 INSTALL vgi FROM community;
 LOAD vgi;
 
-ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.4.3 vgi-pii-worker');
+ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'uvx --from git+https://github.com/Query-farm/vgi-pii@v0.5.0 vgi-pii-worker');
 
 -- Flag whether text contains any PII (a boolean predicate for filtering).
 SELECT pii.main.has_pii('Call John Smith at john@example.com');
@@ -51,14 +53,14 @@ SELECT pii.main.has_pii('Call John Smith at john@example.com');
 SELECT pii.main.redact('Call John Smith at john@example.com');
 ```
 
-Change `@v0.4.3` to move to a newer release.
+Change `@v0.5.0` to move to a newer release.
 
 ### Other ways to run it
 
 - **Docker** (the image bundles the worker and its dependencies):
 
   ```sql
-  ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pii:0.4.3');
+  ATTACH 'pii' AS pii (TYPE vgi, LOCATION 'docker://ghcr.io/query-farm/vgi-pii:0.5.0');
   ```
 
 - **From a local checkout** (`git clone https://github.com/Query-farm/vgi-pii`), point `LOCATION` at `uv run --project /path/to/vgi-pii vgi-pii-worker`.
@@ -205,7 +207,7 @@ lifecycle in-process; `tests/test_scalars.py` spawns `pii_worker.py` over the VG
 client/RPC stack exactly as DuckDB would after `ATTACH`. The `test/sql/*.test`
 files are DuckDB sqllogictest cases run by
 [`haybarn-unittest`](https://pypi.org/project/haybarn-unittest/)
-(haybarn 2.0: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.0rc11,<2.1'`) against a real `ATTACH` + `SELECT`.
+(haybarn 2.0: `uv tool install --prerelease allow 'haybarn-unittest>=2.0.1rc3,<2.1'`) against a real `ATTACH` + `SELECT`.
 
 ## Layout
 
